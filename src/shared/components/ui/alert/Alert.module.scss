@@ -1,0 +1,108 @@
+.alertOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.alertContent {
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: zoomIn 0.2s ease-out;
+}
+
+@keyframes zoomIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.alertHeader {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.alertIcon {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.alertTitle {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.alertMessage {
+  font-size: 16px;
+  color: #555;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.alertActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.type-success .alertIcon { color: #28a745; }
+.type-error .alertIcon { color: #dc3545; }
+.type-warning .alertIcon { color: #ffc107; }
+.type-info .alertIcon { color: #007bff; }
+
+.button {
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, opacity 0.2s;
+  border: 1px solid transparent;
+}
+
+.primaryButton {
+  background-color: #007bff;
+  color: white;
+}
+
+.primaryButton:hover {
+  background-color: #0056b3;
+}
+
+.secondaryButton {
+  background-color: #f8f9fa;
+  color: #333;
+  border-color: #ddd;
+}
+
+.secondaryButton:hover {
+  background-color: #e2e6ea;
+}
+
+.singleButton {
+  background-color: #007bff;
+  color: white;
+  min-width: 80px;
+}
+
+.singleButton:hover {
+  background-color: #0056b3;
+}

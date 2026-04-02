@@ -1,0 +1,48 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist/",
+    "target": "esnext",
+    "module": "esnext",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable", "esnext"],
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "baseUrl": ".",
+
+    /* Aliases */
+    "paths": {
+      "@/*": ["src/*"],
+      "@ui/*": ["src/shared/components/ui/*"],
+      "@images/*": ["assets/images/*"],
+      "@auth/*": ["src/shared/auth/*"],
+      "@chat/*": ["src/shared/chat/*"],
+      "@icons/*": ["assets/icons/*"],
+      "@components/*": ["src/shared/components/*"],
+      "@consts/*": ["src/shared/consts/*"],
+      "@appTypes/*": ["src/shared/types/*"],
+      "@pages/*": ["src/pages/*"],
+      "@hooks/*": ["src/shared/hooks/*"],
+      "@api/*": ["src/shared/api/*"],
+      "@store/*": ["src/shared/store/*"],
+    },
+
+    /* Bundler mode */
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/app/types/global.d.ts", "./.eslintrc.cjs"],
+
+  "exclude": ["node_modules"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

@@ -1,0 +1,273 @@
+$highlightColor: #e8f4ff;
+$highlightBorder: #4a90e2;
+
+.adminDashboardCalendar {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.calendarCard {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.calendarScroll {
+  overflow-x: auto;
+  overflow-y: visible;
+  position: relative;
+  z-index: 1;
+  flex: 1;
+}
+
+.calendarGrid {
+  display: flex;
+}
+
+/* ----------------------------------- */
+/* 2. ЛИПКИЙ СТОЛБЕЦ ВРЕМЕНИ */
+/* ----------------------------------- */
+
+.timeColumnWrapper {
+  z-index: 10;
+  background: white;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.timeColumnHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 90px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  width: 80px;
+  min-width: 80px;
+  background: #f8f9ff;
+  border-bottom: 1px solid #e0e0e0;
+  border-right: 1px solid #e0e0e0;
+  box-sizing: border-box;
+}
+
+.timeLabelsColumn {
+  display: flex;
+  flex-direction: column;
+  width: 80px;
+  min-width: 80px;
+  border-right: 1px solid #e0e0e0;
+  background: #fafafa;
+  box-sizing: border-box;
+}
+
+.timeLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  min-height: 100px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #777;
+  background: #fafafa;
+  border-bottom: 1px solid #e0e0e0;
+  box-sizing: border-box;
+}
+
+/* ----------------------------------- */
+/* 3. ЗАГОЛОВКИ РЕПЕТИТОРОВ */
+/* ----------------------------------- */
+
+.tutorHeadersWrapper {
+  display: flex;
+  background: #f8f9ff;
+}
+
+.tutorHeaderCell {
+  display: flex;
+  flex-direction: column;
+  background: #f8f9ff;
+  align-items: center;
+  justify-content: center;
+  height: 90px;
+  box-sizing: border-box;
+  border-right: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+  min-width: 216px;
+  flex-basis: 224px;
+  flex-grow: 1;
+  flex-shrink: 1;
+
+  &:last-child {
+    border-right: 1px solid #e0e0e0;
+  }
+
+  strong {
+    text-align: center;
+    padding: 0 5px;
+    word-break: break-word;
+    color: #1a1a1a;
+  }
+}
+
+/* ----------------------------------- */
+/* 4. СЕТКА ЯЧЕЕК РАСПИСАНИЯ */
+/* ----------------------------------- */
+
+.daysCellsWrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.timeRow {
+  display: flex;
+  height: 100px;
+  border-bottom: 1px solid #e0e0e0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.dataCell {
+  border-right: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  box-sizing: border-box;
+  height: 100px;
+  min-height: 100px;
+  position: relative;
+  min-width: 216px;
+  flex-basis: 224px;
+  flex-grow: 1;
+  flex-shrink: 1;
+  transition: background-color 0.3s ease;
+
+  &:last-child {
+    border-right: 1px solid #e0e0e0;
+  }
+
+  &.cellHeight {
+    height: 100px;
+    padding: 0;
+    position: relative;
+  }
+
+  &.relativeContainer {
+  }
+
+}
+
+.adminLessonCard {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  z-index: 2;
+  padding: 6px 8px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-sizing: border-box;
+  white-space: normal;
+  word-wrap: break-word;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  border-left: 5px solid;
+
+  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
+
+  &:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+  }
+
+  &.statusGreen {
+    background-color: #28a745;
+    border-left-color: #1e7e34;
+  }
+  &.statusYellow {
+    background-color: #ffc107;
+    color: #333;
+    border-left-color: #ffa000;
+  }
+
+  &.statusRed {
+    background-color: #dc3545;
+    border-left-color: #bd2130;
+  }
+  &.statusGray {
+    background-color: #6c757d;
+    border-left-color: #5a6268;
+  }
+
+  .studentName {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lessonTime {
+    font-size: 0.75rem;
+  }
+}
+
+.relativeContainer {
+}
+.cellHeight {
+  height: 80px;
+  padding: 0;
+  position: relative;
+}
+
+.studentName {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.lessonType {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  margin-bottom: 2px;
+}
+
+.timeLabel.isHighlighted {
+  background-color: $highlightColor;
+  border-left: 4px solid $highlightBorder; /* Добавим жирный акцент */
+}
+
+/* Выделение всех ячеек в строке (включая саму строку timeRow) */
+.timeRow.isHighlightedRow {
+  background-color: $highlightColor;
+  /* Уберем границу, чтобы highlight был сплошным */
+  .dataCell {
+    background-color: transparent;
+  }
+}
+
+/* 2. ВЫДЕЛЕНИЕ СТОЛБЦА */
+
+/* Выделение заголовка репетитора */
+.tutorHeaderCell.isHighlighted {
+  background-color: $highlightColor;
+  border-top: 4px solid $highlightBorder; /* Добавим жирный акцент */
+  strong {
+    color: #1a1a1a;
+  }
+}
+
+.dataCell.isHighlightedColumn {
+  background-color: $highlightColor;
+}
+
+.timeRow.isHighlightedRow .dataCell {
+  background-color: $highlightColor;
+}

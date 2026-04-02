@@ -1,0 +1,78 @@
+.lessonCard {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  z-index: 10;
+
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
+  border-left: 5px solid;
+
+  font-size: 12px;
+  line-height: 1.3;
+  overflow: hidden;
+  color: #fff;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.timeInfo {
+  font-weight: 600;
+  margin-bottom: 2px;
+  font-size: 11px;
+}
+
+.studentName {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lessonDetails {
+  font-weight: 400;
+  font-size: 10px;
+  opacity: 0.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statusYellow {
+  background-color: #ffc107;
+  border-left-color: #ffa000;
+  color: #333;
+}
+
+.statusGreen {
+  background-color: #28a745;
+  border-left-color: #1e7e34;
+}
+
+.statusRed {
+  background-color: #dc3545;
+  border-left-color: #bd2130;
+}
+
+.statusGray {
+  background-color: #6c757d;
+  border-left-color: #5a6268;
+}
+
+.pastLesson {
+  opacity: 0.6;
+  cursor: default;
+  box-shadow: none;
+  pointer-events: none;
+
+  &:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}

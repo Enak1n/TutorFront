@@ -1,0 +1,84 @@
+.userCard {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+
+  &:hover {
+    box-shadow: 0 6px 15px rgba(0, 123, 255, 0.2);
+    transform: translateY(-2px);
+  }
+}
+
+.photoContainer {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.userPhoto {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #007bff;
+}
+
+.statusIndicator {
+  position: absolute;
+  bottom: 3px;
+  right: 10px;
+  width: 14px;
+  height: 14px;
+  background-color: #28a745;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  z-index: 10;
+}
+
+.userInfo {
+  flex-grow: 1;
+  margin-bottom: 10px;
+}
+
+.userName {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #343a40;
+  margin-bottom: 4px;
+}
+
+.userRole {
+  font-size: 0.9rem;
+  color: #007bff;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.registeredOn {
+  font-size: 0.8rem;
+  color: #495057;
+  font-style: italic;
+  line-height: 1.2;
+}
+
+.userUsername {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.viewProfileHint {
+  font-size: 0.8rem;
+  color: #007bff;
+  font-weight: 500;
+  padding-top: 10px;
+  border-top: 1px dashed #e0e0e0;
+  width: 100%;
+}

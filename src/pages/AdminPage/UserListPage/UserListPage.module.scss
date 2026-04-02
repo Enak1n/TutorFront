@@ -1,0 +1,108 @@
+.userListPage {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 20px;
+  background: #f8f9fc;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.title {
+  font-size: 2.2rem;
+  color: #007bff;
+  text-align: center;
+  margin-bottom: 30px;
+  font-weight: 700;
+}
+
+.userListContainer {
+  position: relative;
+  min-height: 400px;
+  margin-top: 20px;
+}
+
+.userCardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  padding: 0;
+}
+
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  color: #007bff;
+
+  img {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 10px;
+  }
+}
+
+.noResults {
+  text-align: center;
+  padding: 40px;
+  font-size: 1.2rem;
+  color: #6c757d;
+  background: #ffffff;
+  border-radius: 8px;
+}
+
+.error {
+  color: #dc3545;
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.countMessage {
+  font-size: 1rem;
+  color: #495057;
+  text-align: center;
+  margin: 10px 0 20px 0;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .countMessage {
+    text-align: left;
+  }
+}
+
+@media (max-width: 768px) {
+  .userListPage {
+    margin: 20px 15px;
+    padding: 15px;
+  }
+
+  .title {
+    font-size: 1.8rem;
+  }
+
+  .userCardGrid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .userCardGrid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+}

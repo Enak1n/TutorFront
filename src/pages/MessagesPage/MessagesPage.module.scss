@@ -1,0 +1,167 @@
+$primary-color: #007bff;
+$secondary-color: #f8f9fa;
+$border-color: #ddd;
+$read-color: #4CAF50;
+$unread-color: #999;
+
+.container {
+  max-width: 1200px;
+  margin: 20px auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+
+  @media (max-width: 768px) {
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.pageTitle {
+  margin-bottom: 20px;
+  border-bottom: 1px solid $border-color;
+  padding-bottom: 10px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 10px;
+    font-size: 1.5em;
+  }
+}
+
+.loading, .error, .emptyList {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+.dialogueList {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.dialogueItem {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  @media (max-width: 768px) {
+    padding: 10px 5px;
+  }
+
+  &:hover {
+    background-color: $secondary-color;
+  }
+
+  .avatarContainer {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    margin-right: 15px;
+    flex-shrink: 0;
+
+    @media (max-width: 768px) {
+      width: 45px;
+      height: 45px;
+      margin-right: 10px;
+    }
+  }
+
+  .avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .statusIndicator {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    width: 12px;
+    height: 12px;
+    background-color: $read-color;
+    border-radius: 50%;
+    border: 2px solid white;
+    z-index: 10;
+  }
+
+  .info {
+    flex-grow: 1;
+    min-width: 0;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 5px;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  .name {
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 1;
+    max-width: 80%;
+  }
+
+  .role {
+    font-size: 0.8em;
+    color: $primary-color;
+    margin-left: 5px;
+  }
+
+  .date {
+    font-size: 0.8em;
+    color: #999;
+    flex-shrink: 0;
+
+    @media (max-width: 768px) {
+      margin-top: 2px;
+      font-size: 0.7em;
+    }
+  }
+
+  .lastMessage {
+    font-size: 0.9em;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+  }
+
+  .unreadBadge {
+    background-color: $primary-color;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75em;
+    font-weight: bold;
+    flex-shrink: 0;
+    margin-left: 10px;
+  }
+}

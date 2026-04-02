@@ -1,0 +1,101 @@
+.adminPageContainer {
+  min-height: 80vh;
+  background-color: #fcfcfc;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+
+  @media (max-width: 768px) {
+    padding: 24px 16px;
+  }
+}
+
+.pageTitle {
+  color: #1a1a1a;
+  margin-bottom: 25px;
+  font-size: 36px;
+  font-weight: 700;
+}
+
+.calendarControls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 25px;
+  align-items: center;
+  padding: 10px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+  @media (max-width: 600px) {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px;
+  }
+}
+
+.navButton {
+  padding: 10px 20px;
+  background: white;
+  color: #0066ff;
+  border: 2px solid #0066ff;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    background: #0066ff;
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #f1f1f1;
+    color: #999;
+    border-color: #ccc;
+  }
+
+  @media (max-width: 768px) {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+}
+
+.todayButton {
+}
+
+.currentDate {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #555;
+  font-weight: 500;
+
+  @media (max-width: 600px) {
+    order: 10;
+    flex-basis: 100%;
+    text-align: center;
+    padding-top: 5px;
+    font-size: 1rem;
+  }
+}
+
+.errorMessage {
+  color: #d32f2f;
+  padding: 10px;
+  background-color: #ffebee;
+  border-radius: 4px;
+  border: 1px solid #ef9a9a;
+  margin-bottom: 15px;
+}

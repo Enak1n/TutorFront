@@ -1,0 +1,178 @@
+.pageContainer {
+  max-width: 850px;
+  margin: 40px auto;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  color: #333;
+  font-family: 'Inter', sans-serif;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 15px;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #007bff;
+  margin-bottom: 5px;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.section {
+  margin-bottom: 30px;
+  padding-top: 15px;
+}
+
+.section p {
+  margin-bottom: 15px;
+  line-height: 1.6;
+  text-align: justify;
+}
+
+.section h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  color: #343a40;
+}
+
+.sectionTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #007bff;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 5px;
+}
+
+.list {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 15px;
+  counter-reset: section-counter; /* Сбрасываем счетчик для корневого уровня */
+}
+
+.list > li {
+  margin-bottom: 10px;
+  line-height: 1.5;
+  text-align: justify;
+  padding-left: 30px;
+  position: relative;
+  list-style-type: none;
+}
+
+.list > li:before {
+  counter-increment: section-counter;
+  content: counter(section-counter) "."; /* Формат: 1. */
+  font-weight: 700;
+  position: absolute;
+  left: 0;
+  width: 25px;
+  text-align: right;
+}
+
+/* 2. Вложенный список (1.1, 1.2...) */
+.subOrderedList {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 5px;
+  counter-reset: sub-counter; /* Сбрасываем счетчик для подпунктов */
+}
+
+.subOrderedList li {
+  margin-bottom: 5px;
+  line-height: 1.4;
+  text-align: justify;
+  padding-left: 35px;
+  position: relative;
+  list-style-type: none;
+}
+
+.subOrderedList li:before {
+  counter-increment: sub-counter;
+  /* Склеиваем: Родительский счетчик (section-counter) + свой счетчик (sub-counter) */
+  content: counter(section-counter) "." counter(sub-counter) ".";
+  font-weight: normal;
+  position: absolute;
+  left: 0;
+  width: 30px;
+  text-align: right;
+}
+
+.prohibitedActions {
+  list-style: none;
+  padding-left: 30px;
+  margin-top: 10px;
+  counter-reset: prohibited-counter;
+}
+
+.prohibitedActions li {
+  margin-bottom: 8px;
+  line-height: 1.4;
+  text-align: justify;
+  padding-left: 0;
+  list-style-type: none;
+}
+
+.prohibitedActions li:before {
+  counter-increment: prohibited-counter;
+  content: counter(prohibited-counter) ". "; /* Формат: 1. */
+  font-weight: normal;
+  margin-right: 5px;
+  display: inline-block;
+  width: 15px;
+  text-align: right;
+}
+
+/* --- АДАПТИВНОСТЬ (Mobile Styles) --- */
+
+@media (max-width: 600px) {
+  .pageContainer {
+    margin: 20px 10px;
+    padding: 15px;
+  }
+
+  .title {
+    font-size: 1.7rem;
+    word-break: break-word;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .sectionTitle {
+    font-size: 1.35rem;
+  }
+
+  /* Равномерное уменьшение основного контента */
+  .section p,
+  .section h3,
+  .list li,
+  .subList li,
+  .prohibitedActions li {
+    font-size: 1rem;
+  }
+
+  .section h3 {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .title {
+    font-size: 1.5rem;
+  }
+}

@@ -1,0 +1,288 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 10px;
+}
+
+.modalContent {
+  background-color: #fff;
+  position: relative;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+  animation: fadeIn 0.3s ease-out;
+  max-height: 95vh;
+  overflow-y: auto;
+}
+
+.modalTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #1a1a1a;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 10px;
+}
+
+.errorText {
+  color: #c53030;
+  background-color: #fff5f5;
+  border: 1px solid #fed7d7;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.formGroup, .formSection {
+  margin-bottom: 15px;
+  position: relative;
+  z-index: 10;
+}
+
+label {
+  display: flex;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #555;
+  font-size: 0.95rem;
+  align-items: center;
+}
+
+.selectInput,
+.textareaInput {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #777777;
+  border-radius: 8px;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-size: 1rem;
+  background-color: #fff;
+  color: #1a1a1a;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.selectInput:focus,
+.textareaInput:focus {
+  border-color: #0066ff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.2);
+}
+
+.readOnlyInput {
+  width: 50%;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #f8f9ff;
+  font-size: 14px;
+  cursor: default;
+  font-weight: 500;
+  color: #555;
+}
+
+.timeGroup, .categoryGroup {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.timeGroup > .formGroup,
+.categoryGroup > .formGroup {
+  flex: 1;
+  min-width: 0;
+}
+
+.timeDisplay {
+  flex-shrink: 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.timeDisplay label {
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 6px;
+  align-self: flex-start;
+}
+
+.timeValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0066ff;
+  margin-top: 0;
+  padding: 5px 10px;
+  background-color: #f0f4ff;
+  border-radius: 8px;
+  line-height: 1.5;
+  box-sizing: border-box;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkboxGroup {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.checkboxGroup input[type="checkbox"] {
+  margin-right: 10px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.buttonGroup {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 30px;
+}
+
+.deleteButton {
+  padding: 10px 20px;
+  border: 1px solid #ff4d4d;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s, opacity 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+
+  background-color: #fff;
+  color: #ff4d4d;
+}
+
+.deleteButton:hover:not(:disabled) {
+  background-color: #ffe6e6;
+  border-color: #ff1a1a;
+}
+
+.deleteButton:disabled {
+  background-color: #f7f7f7;
+  color: #a8a8a8;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.primaryButton, .secondaryButton {
+  padding: 10px 20px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s, opacity 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+
+.primaryButton {
+  background-color: #0066ff;
+  color: white;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background-color: #0050cc;
+}
+
+.primaryButton:disabled {
+  background-color: #e2e8f0;
+  color: #555;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.secondaryButton {
+  background-color: #fff;
+  border-color: #555;
+  color: #f50000;
+}
+
+.secondaryButton:hover:not(:disabled) {
+  background-color: #f7f7f7;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 550px) {
+  .modalContent {
+    padding: 20px;
+  }
+
+  .timeGroup, .categoryGroup {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .timeDisplay {
+    align-self: flex-start;
+    width: 100%;
+  }
+
+  .timeValue {
+    width: 100%;
+  }
+
+  .readOnlyInput {
+    width: 100%;
+  }
+
+  .buttonGroup {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .primaryButton, .secondaryButton {
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+  }
+}
+
+.closeButton {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  font-weight: 300;
+  color: #555;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  transition: color 0.2s;
+  z-index: 1000;
+
+  &:hover {
+    color: #c53030;
+  }
+}
+
+.requiredAsterisk {
+  color: #c53030;
+  margin-left: 4px;
+  font-weight: 700;
+  font-size: 1rem;
+}

@@ -1,0 +1,265 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1100;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  z-index: 1101;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+
+  @media (max-width: 480px) {
+    width: 95%;
+    border-radius: 12px;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -40%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid #e0e0e0;
+
+  @media (max-width: 480px) {
+    padding: 20px 20px 12px;
+  }
+}
+
+.modalTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
+}
+
+.closeButton {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  font-size: 32px;
+  color: #666;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  line-height: 1;
+
+  &:hover {
+    background: #f5f5f5;
+    color: #1a1a1a;
+  }
+}
+
+.modalContent {
+  padding: 24px;
+
+  @media (max-width: 480px) {
+    padding: 20px;
+  }
+}
+
+.description {
+  font-size: 16px;
+  color: #666;
+  margin: 0 0 24px;
+  text-align: center;
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+}
+
+.roleOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.roleCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+  background: #f8f9ff;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+
+  &:hover {
+    border-color: #0066ff;
+    background: #f0f7ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 102, 255, 0.15);
+  }
+
+  &.selected {
+    border-color: #0066ff;
+    background: #0066ff;
+    color: white;
+
+    .roleTitle,
+    .roleDescription {
+      color: white;
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 20px;
+  }
+}
+
+.roleIcon {
+  font-size: 48px;
+  margin-bottom: 12px;
+
+  @media (max-width: 480px) {
+    font-size: 40px;
+    margin-bottom: 8px;
+  }
+}
+
+.roleTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 8px;
+
+  @media (max-width: 480px) {
+    font-size: 18px;
+  }
+}
+
+.roleDescription {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  line-height: 1.5;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
+}
+
+.checkmark {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: scaleIn 0.3s ease;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.telegramButtonWrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  animation: slideUp 0.3s ease;
+}
+
+.telegramButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  background: #0088cc;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  animation: slideUp 0.3s ease;
+
+  &:hover {
+    background: #006699;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  @media (max-width: 480px) {
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+}
+
+.telegramIcon {
+  flex-shrink: 0;
+}
+
+.privacyText {
+  font-size: 0.8rem;
+  color: #6c757d;
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}

@@ -1,0 +1,186 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 550px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  position: relative;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.closeButton {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+  color: #343a40;
+  transition: color 0.2s;
+  &:hover {
+    color: #dc3545;
+  }
+}
+
+.modalTitle {
+  font-size: 1.8rem;
+  margin-bottom: 25px;
+  color: #007bff;
+  border-bottom: 2px solid #f8f9fa;
+  padding-bottom: 10px;
+}
+
+/* --- Детали --- */
+.detailsSection {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px dotted #e9ecef;
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.detailLabel {
+  font-weight: 600;
+  color: #495057;
+  flex-basis: 40%;
+}
+
+.detailValue {
+  font-weight: 500;
+  text-align: right;
+  flex-basis: 60%;
+
+  &.statusGreen {
+    color: #28a745;
+    font-weight: 700;
+  }
+
+  &.statusYellow {
+    color: #ffc107;
+    font-weight: 700;
+  }
+}
+
+.personInfo {
+  margin-bottom: 15px;
+  padding: 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.personTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #343a40;
+  margin-bottom: 8px;
+}
+
+.personDetails {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.photo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.name {
+  font-weight: 500;
+  color: #343a40;
+}
+
+.username {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-direction: column;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.actions button {
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+  border: none;
+}
+
+.setPaidButton {
+  background-color: #28a745;
+  color: white;
+  &:hover:not(:disabled) {
+    background-color: #1e7e34;
+  }
+}
+
+.setUnpaidButton {
+  background-color: #ffe082;
+  color: #856404;
+  &:hover:not(:disabled) {
+    background-color: #e1c571
+  }
+}
+
+.cancelButton {
+  background-color: #f0f0f0;
+  color: #6c757d;
+  &:hover:not(:disabled) {
+    background-color: #e2e6ea;
+  }
+}
+
+.actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2rem;
+  color: #007bff;
+  border-radius: 12px;
+}
