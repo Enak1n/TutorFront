@@ -61,20 +61,15 @@ const AppContent = ({
 	navigateToChat,
 }: AppContentProps) => {
 	const defaultAuthenticatedRoute = '/schedule'
-	const isMigrationPending =
-		typeof window !== 'undefined'
-			? localStorage.getItem('migration_pending') === 'true'
-			: false
 
 	const routes = [
 		{
 			path: '/',
-			element:
-				isAuthenticated && !isMigrationPending ? (
-					<Navigate to={defaultAuthenticatedRoute} replace />
-				) : (
-					<LandingPage />
-				),
+			element: isAuthenticated ? (
+				<Navigate to={defaultAuthenticatedRoute} replace />
+			) : (
+				<LandingPage />
+			),
 		},
 		{ path: '/legal-info', element: <LegalInfoPage /> },
 		{ path: '/privacy-policy', element: <PrivacyPolicyPage /> },
@@ -82,10 +77,7 @@ const AppContent = ({
 		{
 			path: '/profile',
 			element: (
-				<ProtectedRoute
-					isAuthenticated={isAuthenticated && !isMigrationPending}
-					userRole={userRole}
-				>
+				<ProtectedRoute isAuthenticated={isAuthenticated} userRole={userRole}>
 					<UserProfilePage />
 				</ProtectedRoute>
 			),
@@ -93,10 +85,7 @@ const AppContent = ({
 		{
 			path: '/schedule',
 			element: (
-				<ProtectedRoute
-					isAuthenticated={isAuthenticated && !isMigrationPending}
-					userRole={userRole}
-				>
+				<ProtectedRoute isAuthenticated={isAuthenticated} userRole={userRole}>
 					<SchedulePage />
 				</ProtectedRoute>
 			),
@@ -105,7 +94,7 @@ const AppContent = ({
 			path: '/statistic',
 			element: (
 				<ProtectedRoute
-					isAuthenticated={isAuthenticated && !isMigrationPending}
+					isAuthenticated={isAuthenticated}
 					userRole={userRole}
 					allowedRoles={['tutor', 'student_or_parent']}
 				>
@@ -118,10 +107,7 @@ const AppContent = ({
 		{
 			path: '/students',
 			element: (
-				<ProtectedRoute
-					isAuthenticated={isAuthenticated && !isMigrationPending}
-					userRole={userRole}
-				>
+				<ProtectedRoute isAuthenticated={isAuthenticated} userRole={userRole}>
 					<MyPersonPage
 						userRole={userRole}
 						navigateToProfile={navigateToProfile}
@@ -133,10 +119,7 @@ const AppContent = ({
 		{
 			path: '/user/profile/:userId',
 			element: (
-				<ProtectedRoute
-					isAuthenticated={isAuthenticated && !isMigrationPending}
-					userRole={userRole}
-				>
+				<ProtectedRoute isAuthenticated={isAuthenticated} userRole={userRole}>
 					<UserProfilePage />
 				</ProtectedRoute>
 			),
@@ -144,10 +127,7 @@ const AppContent = ({
 		{
 			path: '/messages',
 			element: (
-				<ProtectedRoute
-					isAuthenticated={isAuthenticated && !isMigrationPending}
-					userRole={userRole}
-				>
+				<ProtectedRoute isAuthenticated={isAuthenticated} userRole={userRole}>
 					<MessagesPage />
 				</ProtectedRoute>
 			),
@@ -155,10 +135,7 @@ const AppContent = ({
 		{
 			path: '/messages/:chatId',
 			element: (
-				<ProtectedRoute
-					isAuthenticated={isAuthenticated && !isMigrationPending}
-					userRole={userRole}
-				>
+				<ProtectedRoute isAuthenticated={isAuthenticated} userRole={userRole}>
 					<MessagesPage />
 				</ProtectedRoute>
 			),
@@ -167,7 +144,7 @@ const AppContent = ({
 			path: '/admin',
 			element: (
 				<ProtectedRoute
-					isAuthenticated={isAuthenticated && !isMigrationPending}
+					isAuthenticated={isAuthenticated}
 					userRole={userRole}
 					allowedRoles={['admin']}
 				>
@@ -179,7 +156,7 @@ const AppContent = ({
 			path: '/all-message',
 			element: (
 				<ProtectedRoute
-					isAuthenticated={isAuthenticated && !isMigrationPending}
+					isAuthenticated={isAuthenticated}
 					userRole={userRole}
 					allowedRoles={['admin']}
 				>
@@ -191,7 +168,7 @@ const AppContent = ({
 			path: '/all-message/:chatId',
 			element: (
 				<ProtectedRoute
-					isAuthenticated={isAuthenticated && !isMigrationPending}
+					isAuthenticated={isAuthenticated}
 					userRole={userRole}
 					allowedRoles={['admin']}
 				>
@@ -203,7 +180,7 @@ const AppContent = ({
 			path: '/all-statistic',
 			element: (
 				<ProtectedRoute
-					isAuthenticated={isAuthenticated && !isMigrationPending}
+					isAuthenticated={isAuthenticated}
 					userRole={userRole}
 					allowedRoles={['admin']}
 				>
@@ -215,7 +192,7 @@ const AppContent = ({
 			path: '/tutor-student-link',
 			element: (
 				<ProtectedRoute
-					isAuthenticated={isAuthenticated && !isMigrationPending}
+					isAuthenticated={isAuthenticated}
 					userRole={userRole}
 					allowedRoles={['admin']}
 				>
@@ -227,7 +204,7 @@ const AppContent = ({
 			path: '/admin/users',
 			element: (
 				<ProtectedRoute
-					isAuthenticated={isAuthenticated && !isMigrationPending}
+					isAuthenticated={isAuthenticated}
 					userRole={userRole}
 					allowedRoles={['admin']}
 				>
@@ -239,7 +216,7 @@ const AppContent = ({
 			path: '/admin/parent-links',
 			element: (
 				<ProtectedRoute
-					isAuthenticated={isAuthenticated && !isMigrationPending}
+					isAuthenticated={isAuthenticated}
 					userRole={userRole}
 					allowedRoles={['admin']}
 				>
@@ -265,15 +242,15 @@ export const AppLogic = () => {
 	const isAuthenticated = !!token
 	const userRole = role as 'tutor' | 'student_or_parent' | 'admin' | null
 
-	// 🔹 ВСЕ useState — В НАЧАЛЕ
 	const [isLoading, setIsLoading] = useState(true)
 	const [isGlobalModalOpen, setIsGlobalModalOpen] = useState(false)
 
-	// 🔹 ВСЕ useEffect — В НАЧАЛЕ
 	useEffect(() => {
 		const setVh = () => {
-			const vh = window.innerHeight * 0.01
-			document.documentElement.style.setProperty('--vh', `${vh}px`)
+			document.documentElement.style.setProperty(
+				'--vh',
+				`${window.innerHeight * 0.01}px`,
+			)
 		}
 		setVh()
 		window.addEventListener('resize', setVh)
@@ -281,33 +258,25 @@ export const AppLogic = () => {
 	}, [])
 
 	useEffect(() => {
-		if (isChatPage) {
-			document.body.classList.add('chat-mode-active')
-		} else {
-			document.body.classList.remove('chat-mode-active')
-		}
+		if (isChatPage) document.body.classList.add('chat-mode-active')
+		else document.body.classList.remove('chat-mode-active')
 	}, [isChatPage])
 
 	useEffect(() => {
 		const initAuth = async () => {
-			if (!token) {
-				setIsLoading(false)
-				return
-			}
-			if (userInfo) {
+			if (!token || userInfo) {
 				setIsLoading(false)
 				return
 			}
 			try {
 				const fetchedUserInfo = await getUserInfo()
-				if (fetchedUserInfo) {
-					setAuthData(fetchedUserInfo, setUserInfo)
-				} else {
+				if (fetchedUserInfo) setAuthData(fetchedUserInfo, setUserInfo)
+				else {
 					localStorage.clear()
 					syncAuthData()
 				}
-			} catch (error) {
-				console.error('[v0] Auth check failed:', error)
+			} catch {
+				console.error('[v0] Auth check failed')
 				localStorage.clear()
 				syncAuthData()
 				navigate('/', { replace: true })
@@ -324,27 +293,11 @@ export const AppLogic = () => {
 		const isMigrationPending =
 			localStorage.getItem('migration_pending') === 'true'
 		if (hasAuthToken && isMigrationPending) {
-			const savedEmail = localStorage.getItem('migration_email')
-			const savedShowCode = localStorage.getItem(
-				'migration_show_code_verification',
-			)
-			const savedTimer = localStorage.getItem('migration_code_timer')
 			setIsGlobalModalOpen(true)
-			if (typeof window !== 'undefined') {
-				window.dispatchEvent(
-					new CustomEvent('restoreMigrationState', {
-						detail: {
-							email: savedEmail,
-							showCodeVerification: savedShowCode === 'true',
-							timer: savedTimer ? parseInt(savedTimer, 10) : null,
-						},
-					}),
-				)
-			}
 		}
 	}, [])
 
-	// 🔹 Слушатель события от ProtectedRoute
+	// Слушатель события от ProtectedRoute / LandingPage
 	useEffect(() => {
 		const handleShowMigration = () => setIsGlobalModalOpen(true)
 		window.addEventListener('showMigrationModal', handleShowMigration)
@@ -352,7 +305,6 @@ export const AppLogic = () => {
 			window.removeEventListener('showMigrationModal', handleShowMigration)
 	}, [])
 
-	// 🔹 ВСЕ useCallback — В НАЧАЛЕ
 	const handleLogin = useCallback(
 		async (
 			selectedRole: 'tutor' | 'student_or_parent' | 'admin',
@@ -364,14 +316,10 @@ export const AppLogic = () => {
 				localStorage.setItem('id', response.id)
 				localStorage.setItem('role', response.role)
 				syncAuthData()
-				const targetRole = response.role as
-					| 'tutor'
-					| 'student_or_parent'
-					| 'admin'
-				const targetPath = targetRole === 'admin' ? '/admin' : '/schedule'
-				navigate(targetPath, { replace: true })
+				navigate(response.role === 'admin' ? '/admin' : '/schedule', {
+					replace: true,
+				})
 			} catch (error) {
-				console.error('[v0] Login failed:', error)
 				showAlert('Ошибка авторизации. Попробуйте еще раз.', 'error')
 			}
 		},
@@ -397,9 +345,6 @@ export const AppLogic = () => {
 		[navigate],
 	)
 
-	// ========================================================================
-	// 🔹 РАННИЙ ВОЗВРАТ — ПОСЛЕ ВСЕХ ХУКОВ
-	// ========================================================================
 	if (isLoading || (isAuthenticated && !userInfo)) {
 		return (
 			<div
@@ -423,9 +368,6 @@ export const AppLogic = () => {
 		)
 	}
 
-	// ========================================================================
-	// 🔹 RETURN JSX
-	// ========================================================================
 	const isMigrationPending =
 		typeof window !== 'undefined'
 			? localStorage.getItem('migration_pending') === 'true'
@@ -454,8 +396,7 @@ export const AppLogic = () => {
 			<LoginModal
 				isOpen={isGlobalModalOpen}
 				onClose={() => {
-					const pending = localStorage.getItem('migration_pending') === 'true'
-					if (!pending) setIsGlobalModalOpen(false)
+					if (!isMigrationPending) setIsGlobalModalOpen(false)
 				}}
 				onLogin={handleLogin}
 				isClosable={!isMigrationPending}

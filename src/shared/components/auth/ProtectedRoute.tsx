@@ -16,25 +16,19 @@ export const ProtectedRoute = ({
 	allowedRoles,
 }: ProtectedRouteProps) => {
 	const location = useLocation()
-	const isMigrationPending =
-		typeof window !== 'undefined'
-			? localStorage.getItem('migration_pending') === 'true'
-			: false
 
+	// ❌ Не авторизован → редирект на лендинг
 	if (!isAuthenticated) {
 		return <Navigate to='/' state={{ from: location }} replace />
 	}
 
-	if (isMigrationPending) {
-		if (typeof window !== 'undefined') {
-			window.dispatchEvent(new CustomEvent('showMigrationModal'))
-		}
-		return <Navigate to='/' replace />
-	}
-
+	// 🔐 Проверка ролей (если указаны разрешённые)
 	if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
 		return <Navigate to='/schedule' replace />
 	}
 
+	// ✅ Все проверки пройдены.
+	// Если migration_pending === true, пользователь всё равно попадёт сюда,
+	// но модалка будет висеть поверх и блокировать взаимодействие.
 	return <>{children}</>
 }
