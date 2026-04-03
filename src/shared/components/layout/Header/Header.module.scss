@@ -1,511 +1,510 @@
 .header {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  background: #0066ff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	position: sticky;
+	top: 0;
+	z-index: 1000;
+	background: #0066ff;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-  height: 70px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 20px;
+	height: 70px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px;
 
-  @media (max-width: 768px) {
-    padding: 0 16px;
-    height: 60px;
-  }
+	@media (max-width: 768px) {
+		padding: 0 16px;
+		height: 60px;
+	}
 }
 
 .leftSection {
-  display: flex;
-  align-items: center;
-  gap: 32px;
+	display: flex;
+	align-items: center;
+	gap: 32px;
 
-  @media (max-width: 768px) {
-    gap: 16px;
-  }
+	@media (max-width: 768px) {
+		gap: 16px;
+	}
 }
 
 .logo {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  transition: transform 0.3s ease;
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+	transition: transform 0.3s ease;
 
-  &:hover {
-    transform: scale(1.05);
-  }
+	&:hover {
+		transform: scale(1.05);
+	}
 
-  img {
-    height: 60px;
-    width: 60px;
-    object-fit: contain;
-    border-radius: 10px;
-    padding: 2px;
+	img {
+		height: 60px;
+		width: 60px;
+		object-fit: contain;
+		border-radius: 10px;
+		padding: 2px;
 
-    @media (max-width: 768px) {
-      height: 50px;
-    }
+		@media (max-width: 768px) {
+			height: 50px;
+		}
 
-    @media (max-width: 480px) {
-      height: 45px;
-    }
-  }
+		@media (max-width: 480px) {
+			height: 45px;
+		}
+	}
 
-  svg {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    padding: 8px;
+	svg {
+		width: 60px;
+		height: 60px;
+		border-radius: 50%;
+		padding: 8px;
 
-    @media (max-width: 768px) {
-      width: 50px;
-      height: 50px;
-    }
+		@media (max-width: 768px) {
+			width: 50px;
+			height: 50px;
+		}
 
-    @media (max-width: 480px) {
-      width: 45px;
-      height: 45px;
-    }
-  }
+		@media (max-width: 480px) {
+			width: 45px;
+			height: 45px;
+		}
+	}
 }
 
 .navLink {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  color: white;
-  text-decoration: none;
-  font-size: 18px;
-  font-weight: 700;
-  transition: opacity 0.3s ease;
-  white-space: nowrap;
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	color: white;
+	text-decoration: none;
+	font-size: 18px;
+	font-weight: 700;
+	transition: opacity 0.3s ease;
+	white-space: nowrap;
 
-  &:hover {
-    opacity: 0.8;
-  }
+	&:hover {
+		opacity: 0.8;
+	}
 }
 .nav {
-  display: flex;
-  gap: 24px;
+	display: flex;
+	gap: 24px;
 
-  @media (max-width: 968px) {
-    display: none;
-  }
+	@media (max-width: 968px) {
+		display: none;
+	}
 }
 .centerNav {
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  flex: 1;
-  justify-content: center;
+	display: flex;
+	align-items: center;
+	gap: 32px;
+	flex: 1;
+	justify-content: center;
 
-  @media (max-width: 968px) {
-    display: none;
-  }
+	@media (max-width: 968px) {
+		display: none;
+	}
 }
 
 .centerNavLink {
-  color: white;
-  text-decoration: none;
-  font-size: 16px;
-  font-weight: 600;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.3s ease;
-  white-space: nowrap;
-  padding: 8px 12px;
-  border-radius: 6px;
+	color: white;
+	text-decoration: none;
+	font-size: 16px;
+	font-weight: 600;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	transition: opacity 0.3s ease;
+	white-space: nowrap;
+	padding: 8px 12px;
+	border-radius: 6px;
 
-  &:hover {
-    opacity: 0.8;
-    background: rgba(255, 255, 255, 0.1);
-  }
+	&:hover {
+		opacity: 0.8;
+		background: rgba(255, 255, 255, 0.1);
+	}
 
-  &:active {
-    background: rgba(255, 255, 255, 0.2);
-  }
+	&:active {
+		background: rgba(255, 255, 255, 0.2);
+	}
 }
 
 /* Right Section */
 .rightSection {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+	display: flex;
+	align-items: center;
+	gap: 16px;
 
-  @media (max-width: 968px) {
-    display: none;
-  }
+	@media (max-width: 968px) {
+		display: none;
+	}
 }
 
 .loginButton {
-  padding: 10px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #0066ff;
-  background: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
+	padding: 10px 24px;
+	font-size: 16px;
+	font-weight: 600;
+	color: #0066ff;
+	background: white;
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	white-space: nowrap;
 
-  &:hover {
-    background: #f0f7ff;
-    transform: translateY(-1px);
-  }
+	&:hover {
+		background: #f0f7ff;
+		transform: translateY(-1px);
+	}
 
-  @media (max-width: 480px) {
-    padding: 8px 16px;
-    font-size: 14px;
-  }
+	@media (max-width: 480px) {
+		padding: 8px 16px;
+		font-size: 14px;
+	}
 }
 
 .profileContainer {
-  position: relative;
-  display: flex;
-  align-items: center;
+	position: relative;
+	display: flex;
+	align-items: center;
 }
 
 .profileDropdown {
-  position: absolute;
-  top: 50px;
-  display: flex;
-  flex-direction: column;
-  right: 0;
-  width: 300px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  z-index: 1050;
-  padding: 8px 0;
-  animation: fadeIn 0.2s ease-out;
+	position: absolute;
+	top: 50px;
+	display: flex;
+	flex-direction: column;
+	right: 0;
+	width: 300px;
+	background: white;
+	border-radius: 8px;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+	z-index: 1050;
+	padding: 8px 0;
+	animation: fadeIn 0.2s ease-out;
 }
 
 .dropdownLogoutButton {
-  margin: 8px 24px;
-  padding: 12px 24px;
-  font-size: 15px;
-  font-weight: 600;
-  color: white;
-  background: #ff4444;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: block;
-  width: calc(100% - 48px);
+	margin: 8px 24px;
+	padding: 12px 24px;
+	font-size: 15px;
+	font-weight: 600;
+	color: white;
+	background: #ff4444;
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	display: block;
+	width: calc(100% - 48px);
 
-  &:hover {
-    background: #cc0000;
-    transform: translateY(-1px);
-  }
+	&:hover {
+		background: #cc0000;
+		transform: translateY(-1px);
+	}
 }
 
-
 .userAvatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 2px solid white;
-  cursor: pointer;
-  transition: transform 0.3s ease;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	overflow: hidden;
+	border: 2px solid white;
+	cursor: pointer;
+	transition: transform 0.3s ease;
 
-  &:hover {
-    transform: scale(1.05);
-  }
+	&:hover {
+		transform: scale(1.05);
+	}
 
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
 
-  @media (max-width: 480px) {
-    width: 36px;
-    height: 36px;
-  }
+	@media (max-width: 480px) {
+		width: 36px;
+		height: 36px;
+	}
 }
 
 .avatarPlaceholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: white;
-  color: #0066ff;
-  font-size: 18px;
-  font-weight: 600;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: white;
+	color: #0066ff;
+	font-size: 18px;
+	font-weight: 600;
 }
 
 .menuButton {
-  display: none;
-  flex-direction: column;
-  justify-content: space-between;
-  width: 28px;
-  height: 22px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: transform 0.3s ease;
+	display: none;
+	flex-direction: column;
+	justify-content: space-between;
+	width: 28px;
+	height: 22px;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	padding: 0;
+	transition: transform 0.3s ease;
 
-  @media (max-width: 968px) {
-    display: flex;
-  }
+	@media (max-width: 968px) {
+		display: flex;
+	}
 
-  &:hover {
-    transform: scale(1.1);
-  }
+	&:hover {
+		transform: scale(1.1);
+	}
 
-  &:focus {
-    outline: 2px solid white;
-    outline-offset: 4px;
-    border-radius: 4px;
-  }
+	&:focus {
+		outline: 2px solid white;
+		outline-offset: 4px;
+		border-radius: 4px;
+	}
 }
 
 .menuIcon {
-  width: 100%;
-  height: 3px;
-  background: white;
-  border-radius: 2px;
-  transition: all 0.3s ease;
+	width: 100%;
+	height: 3px;
+	background: white;
+	border-radius: 2px;
+	transition: all 0.3s ease;
 }
 
 .overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
-  animation: fadeIn 0.3s ease;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 999;
+	animation: fadeIn 0.3s ease;
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
 }
 
 .dropdownMenu {
-  position: fixed;
-  top: 70px;
-  right: max(20px, calc((100vw - 1240px) / 2 + 20px));
-  width: 300px;
-  max-width: 90vw;
-  background: white;
-  box-shadow: -2px 4px 16px rgba(0, 0, 0, 0.15);
-  z-index: 1001;
-  animation: slideIn 0.3s ease;
-  max-height: calc(100vh - 70px);
-  overflow-y: auto;
-  border-radius: 8px;
+	position: fixed;
+	top: 70px;
+	right: max(20px, calc((100vw - 1240px) / 2 + 20px));
+	width: 300px;
+	max-width: 90vw;
+	background: white;
+	box-shadow: -2px 4px 16px rgba(0, 0, 0, 0.15);
+	z-index: 1001;
+	animation: slideIn 0.3s ease;
+	max-height: calc(100vh - 70px);
+	overflow-y: auto;
+	border-radius: 8px;
 
-  @media (max-width: 768px) {
-    top: 60px;
-    right: 16px;
-    max-height: calc(100vh - 60px);
-  }
+	@media (max-width: 768px) {
+		top: 60px;
+		right: 16px;
+		max-height: calc(100vh - 60px);
+	}
 }
 
 @keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+	from {
+		transform: translateX(100%);
+		opacity: 0;
+	}
+	to {
+		transform: translateX(0);
+		opacity: 1;
+	}
 }
 
 .mobileNav {
-  display: flex;
-  flex-direction: column;
-  padding: 16px 0;
+	display: flex;
+	flex-direction: column;
+	padding: 16px 0;
 }
 
 .loginMenuItem {
-  padding: 12px 24px;
-  font-size: 16px;
-  font-weight: 700;
-  color: #1a1a1a;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: left;
-  margin-bottom: 8px;
-  display: block;
-  width: 100%;
+	padding: 12px 24px;
+	font-size: 16px;
+	font-weight: 700;
+	color: #1a1a1a;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	text-align: left;
+	margin-bottom: 8px;
+	display: block;
+	width: 100%;
 
-  &:hover {
-    background: #1f1f1f;
-  }
+	&:hover {
+		background: #1f1f1f;
+	}
 
-  &:active {
-    background: #045cff;
-  }
+	&:active {
+		background: #045cff;
+	}
 }
 
 .mobileNavLink {
-  padding: 12px 24px;
-  font-size: 16px;
-  font-weight: 500;
-  color: #1a1a1a;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: left;
-  width: 100%;
+	padding: 12px 24px;
+	font-size: 16px;
+	font-weight: 500;
+	color: #1a1a1a;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	text-align: left;
+	width: 100%;
 
-  &:hover {
-    background: #e6f0ff;
-    transform: translateX(4px);
-  }
+	&:hover {
+		background: #e6f0ff;
+		transform: translateX(4px);
+	}
 
-  &:active {
-    background: #cce0ff;
-    transform: translateX(2px);
-  }
+	&:active {
+		background: #cce0ff;
+		transform: translateX(2px);
+	}
 }
 
 .userInfoMenu {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 24px;
-  background: #f8f9ff;
-  margin-bottom: 8px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 16px 24px;
+	background: #f8f9ff;
+	margin-bottom: 8px;
 
-  .userAvatar {
-    width: 48px;
-    height: 48px;
-    border: 2px solid #0066ff;
-  }
+	.userAvatar {
+		width: 48px;
+		height: 48px;
+		border: 2px solid #0066ff;
+	}
 
-  .avatarPlaceholder {
-    font-size: 20px;
-  }
+	.avatarPlaceholder {
+		font-size: 20px;
+	}
 
-  .userName {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1a1a1a;
-  }
+	.userName {
+		font-size: 16px;
+		font-weight: 600;
+		color: #1a1a1a;
+	}
 }
 
 .menuDividerBlue {
-  height: 2px;
-  background: #0066ff;
-  margin: 0 0 8px 0;
+	height: 2px;
+	background: #0066ff;
+	margin: 0 0 8px 0;
 }
 
 .menuDivider {
-  height: 1px;
-  background: #e0e0e0;
-  margin: 8px 0;
+	height: 1px;
+	background: #e0e0e0;
+	margin: 8px 0;
 }
 
 .logoutButton {
-  margin: 8px 24px;
-  padding: 12px 24px;
-  font-size: 15px;
-  font-weight: 600;
-  color: white;
-  background: #ff4444;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
+	margin: 8px 24px;
+	padding: 12px 24px;
+	font-size: 15px;
+	font-weight: 600;
+	color: white;
+	background: #ff4444;
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
+	transition: all 0.3s ease;
 
-  &:hover {
-    background: #cc0000;
-    transform: translateY(-1px);
-  }
+	&:hover {
+		background: #cc0000;
+		transform: translateY(-1px);
+	}
 }
 
 .notificationButton {
-  position: relative;
+	position: relative;
 }
 
 .notificationBadge {
-  position: absolute;
-  top: -8px;
-  right: -10px;
-  background-color: #ff4444;
-  color: white;
-  font-size: 10px;
-  font-weight: bold;
-  min-width: 18px;
-  height: 18px;
-  line-height: 18px;
-  border-radius: 9px;
-  padding: 0 4px;
-  text-align: center;
-  pointer-events: none;
-  box-shadow: 0 0 0 2px #0066ff;
+	position: absolute;
+	top: -8px;
+	right: -10px;
+	background-color: #ff4444;
+	color: white;
+	font-size: 10px;
+	font-weight: bold;
+	min-width: 18px;
+	height: 18px;
+	line-height: 18px;
+	border-radius: 9px;
+	padding: 0 4px;
+	text-align: center;
+	pointer-events: none;
+	box-shadow: 0 0 0 2px #0066ff;
 }
 
 .smallNotificationDot {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 10px;
-  height: 10px;
-  background-color: #ff4444;
-  border-radius: 50%;
-  border: 2px solid white;
-  transform: translate(25%, -25%);
-  pointer-events: none;
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 10px;
+	height: 10px;
+	background-color: #ff4444;
+	border-radius: 50%;
+	border: 2px solid white;
+	transform: translate(25%, -25%);
+	pointer-events: none;
 }
 
 .profileNotificationBadge {
-  margin-left: auto;
-  background-color: #0066ff;
-  color: white;
-  font-size: 11px;
-  font-weight: bold;
-  min-width: 20px;
-  height: 20px;
-  line-height: 20px;
-  border-radius: 10px;
-  padding: 0 6px;
-  text-align: center;
+	margin-left: auto;
+	background-color: #0066ff;
+	color: white;
+	font-size: 11px;
+	font-weight: bold;
+	min-width: 20px;
+	height: 20px;
+	line-height: 20px;
+	border-radius: 10px;
+	padding: 0 6px;
+	text-align: center;
 }
 
 .mobileNotificationButton {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 }
 
 .mobileNotificationBadge {
-  background-color: #0066ff;
-  color: white;
-  font-size: 12px;
-  font-weight: bold;
-  min-width: 24px;
-  height: 24px;
-  line-height: 24px;
-  border-radius: 12px;
-  padding: 0 8px;
-  text-align: center;
+	background-color: #0066ff;
+	color: white;
+	font-size: 12px;
+	font-weight: bold;
+	min-width: 24px;
+	height: 24px;
+	line-height: 24px;
+	border-radius: 12px;
+	padding: 0 8px;
+	text-align: center;
 }

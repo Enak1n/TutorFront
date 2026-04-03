@@ -22,7 +22,7 @@ import { PersonStatisticPage } from '@pages/PersonStatisticPage/PersonStatisticP
 import { TutorStudentLinkPage } from '../pages/AdminPage/TutorStudentLinkPage'
 // @ts-ignore
 import loadingGif from '@images/loading.gif'
-import { loginWithTelegram, getUserInfo, UserDetailedInfo } from '@api/auth'
+import { loginWithTelegram, getUserInfo } from '@api/auth'
 import type { TelegramUser } from '@components/auth/TelegramLoginButton'
 import '../styles/global.scss'
 import { AlertProvider } from '@components/ui/alert/AlertContext'
@@ -45,13 +45,6 @@ interface AppContentProps {
 	userRole: 'tutor' | 'student_or_parent' | 'admin' | null
 	navigateToProfile: (userId: string) => void
 	navigateToChat: (chatId: string) => void
-}
-
-const setAuthData = (
-	userInfo: UserDetailedInfo,
-	setAuthInfo: (data: UserDetailedInfo | null) => void,
-) => {
-	setAuthInfo(userInfo)
 }
 
 const AppContent = ({
@@ -270,7 +263,8 @@ export const AppLogic = () => {
 			}
 			try {
 				const fetchedUserInfo = await getUserInfo()
-				if (fetchedUserInfo) setAuthData(fetchedUserInfo, setUserInfo)
+				if (fetchedUserInfo)
+					setUserInfo(fetchedUserInfo) // 🔹 Исправлено: прямой вызов
 				else {
 					localStorage.clear()
 					syncAuthData()
@@ -297,7 +291,7 @@ export const AppLogic = () => {
 		}
 	}, [])
 
-	// Слушатель события от ProtectedRoute / LandingPage
+	// Слушатель события от LandingPage
 	useEffect(() => {
 		const handleShowMigration = () => setIsGlobalModalOpen(true)
 		window.addEventListener('showMigrationModal', handleShowMigration)
@@ -326,12 +320,24 @@ export const AppLogic = () => {
 		[showAlert, navigate, syncAuthData],
 	)
 
+	// 🔹 ИСПРАВЛЕНИЕ: Очистка ВСЕХ ключей миграции при выходе
 	const handleLogout = async () => {
 		setUserInfo(null)
 		setIsLoading(false)
+
+		// 🔹 Очистка ВСЕХ ключей миграции
+		localStorage.removeItem('migration_pending')
+		localStorage.removeItem('migration_code_timer')
+		localStorage.removeItem('migration_email')
+		localStorage.removeItem('migration_show_code_verification')
+		localStorage.removeItem('migration_tg_user')
+		localStorage.removeItem('pendingRole') // ← Важно!
+
+		// Очистка авторизации
 		localStorage.removeItem('authToken')
 		localStorage.removeItem('id')
 		localStorage.removeItem('role')
+
 		syncAuthData()
 		navigate('/', { replace: true })
 	}
@@ -393,11 +399,10 @@ export const AppLogic = () => {
 				navigateToChat={handleNavigateToChat}
 			/>
 			{!isChatPage && <Footer isAuthenticated={isAuthenticated} />}
+
 			<LoginModal
 				isOpen={isGlobalModalOpen}
-				onClose={() => {
-					if (!isMigrationPending) setIsGlobalModalOpen(false)
-				}}
+				onClose={() => setIsGlobalModalOpen(false)}
 				onLogin={handleLogin}
 				isClosable={!isMigrationPending}
 			/>

@@ -1,7 +1,7 @@
 // src/shared/components/layout/Header/LoginModal.tsx
 'use client'
 
-import type React from 'react'
+import React from 'react'
 import { useState, useEffect, useCallback } from 'react'
 import {
 	TelegramLoginButton,
@@ -42,7 +42,7 @@ const STORAGE_KEYS = {
 	MIGRATION_EMAIL: 'migration_email',
 	MIGRATION_SHOW_CODE_VERIFICATION: 'migration_show_code_verification',
 	MIGRATION_PENDING: 'migration_pending',
-	MIGRATION_TG_USER: 'migration_tg_user', // 🔹 NEW: для сохранения ника/аватарки
+	MIGRATION_TG_USER: 'migration_tg_user',
 	AUTH_TOKEN: 'authToken',
 	USER_ROLE: 'userRole',
 } as const
@@ -54,36 +54,33 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 	isClosable = true,
 }) => {
 	// ========================================================================
-	// 🔹 ЛЕНИВАЯ ИНИЦИАЛИЗАЦИЯ (СИНХРОННО ИЗ LS)
+	// 🔹 ЛЕНИВЫЕ ИНИЦИАЛИЗАТОРЫ — для F5 / первого монтирования
 	// ========================================================================
+
+	// Читаем из LS только если работаем в браузере
+	const getFromLS = (key: string) =>
+		typeof window !== 'undefined' ? localStorage.getItem(key) : null
+
 	const [selectedRole, setSelectedRole] = useState<
 		'tutor' | 'student_or_parent' | null
 	>(null)
 
 	const [showMigrationModal, setShowMigrationModal] = useState(
-		() =>
-			typeof window !== 'undefined' &&
-			localStorage.getItem(STORAGE_KEYS.MIGRATION_PENDING) === 'true',
+		() => getFromLS(STORAGE_KEYS.MIGRATION_PENDING) === 'true',
 	)
 
 	const [showCodeVerification, setShowCodeVerification] = useState(
-		() =>
-			typeof window !== 'undefined' &&
-			localStorage.getItem(STORAGE_KEYS.MIGRATION_SHOW_CODE_VERIFICATION) ===
-				'true',
+		() => getFromLS(STORAGE_KEYS.MIGRATION_SHOW_CODE_VERIFICATION) === 'true',
 	)
 
-	const [emailFormData, setEmailFormData] = useState<MigrationFormData>(() => {
-		const savedEmail =
-			typeof window !== 'undefined'
-				? localStorage.getItem(STORAGE_KEYS.MIGRATION_EMAIL)
-				: null
-		return { email: savedEmail || '', password: '', confirmPassword: '' }
-	})
+	const [emailFormData, setEmailFormData] = useState<MigrationFormData>(() => ({
+		email: getFromLS(STORAGE_KEYS.MIGRATION_EMAIL) || '',
+		password: '',
+		confirmPassword: '',
+	}))
 
 	const [codeTimer, setCodeTimer] = useState(() => {
-		if (typeof window === 'undefined') return 0
-		const savedTimer = localStorage.getItem(STORAGE_KEYS.MIGRATION_TIMER)
+		const savedTimer = getFromLS(STORAGE_KEYS.MIGRATION_TIMER)
 		if (savedTimer) {
 			const diff = parseInt(savedTimer, 10) - Date.now()
 			return diff > 0 ? Math.ceil(diff / 1000) : 0
@@ -91,16 +88,15 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 		return 0
 	})
 
-	// 🔹 Восстанавливаем данные пользователя ТГ после перезагрузки
 	const [telegramUserData, setTelegramUserData] = useState<TelegramUser | null>(
 		() => {
-			if (typeof window === 'undefined') return null
-			try {
-				const saved = localStorage.getItem(STORAGE_KEYS.MIGRATION_TG_USER)
-				return saved ? JSON.parse(saved) : null
-			} catch {
-				return null
+			const saved = getFromLS(STORAGE_KEYS.MIGRATION_TG_USER)
+			if (saved) {
+				try {
+					return JSON.parse(saved)
+				} catch {}
 			}
+			return null
 		},
 	)
 
@@ -124,7 +120,60 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 		Partial<Record<keyof typeof emailLoginData, string>>
 	>({})
 
-	// Тикер таймера
+	// ========================================================================
+	// 🔹 ЭФФЕКТ: Восстановление состояния при каждом открытии модалки
+	// (нужно для случаев после выхода и повторного входа)
+	// ========================================================================
+
+	// Флаг, чтобы не восстанавливать при первом монтировании (уже сделано ленивыми инициализаторами)
+	const hasInitializedRef = React.useRef(false)
+
+	useEffect(() => {
+		if (!isOpen) return
+		if (hasInitializedRef.current) {
+			// 🔹 Восстанавливаем состояние при повторных открытиях (после выхода)
+			const isMigrationPending =
+				getFromLS(STORAGE_KEYS.MIGRATION_PENDING) === 'true'
+			const savedEmail = getFromLS(STORAGE_KEYS.MIGRATION_EMAIL)
+			const savedShowCode = getFromLS(
+				STORAGE_KEYS.MIGRATION_SHOW_CODE_VERIFICATION,
+			)
+			const savedTimer = getFromLS(STORAGE_KEYS.MIGRATION_TIMER)
+			const savedTgUser = getFromLS(STORAGE_KEYS.MIGRATION_TG_USER)
+
+			if (isMigrationPending && savedEmail) {
+				setEmailFormData(prev => ({ ...prev, email: savedEmail }))
+				setShowMigrationModal(true)
+
+				if (savedShowCode === 'true' && savedTimer) {
+					const endTime = parseInt(savedTimer, 10)
+					const now = Date.now()
+					if (now < endTime) {
+						setShowCodeVerification(true)
+						setCodeTimer(Math.ceil((endTime - now) / 1000))
+					}
+				}
+			}
+
+			if (savedTgUser) {
+				try {
+					setTelegramUserData(JSON.parse(savedTgUser))
+				} catch {}
+			}
+
+			const savedRole = getFromLS(STORAGE_KEYS.PENDING_ROLE) as
+				| 'tutor'
+				| 'student_or_parent'
+				| null
+			if (savedRole) setSelectedRole(savedRole)
+		}
+		hasInitializedRef.current = true
+	}, [isOpen])
+
+	// ========================================================================
+	// 🔹 Тикер таймера
+	// ========================================================================
+
 	useEffect(() => {
 		if (codeTimer <= 0) return
 		const interval = setInterval(() => {
@@ -143,17 +192,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 		return () => clearInterval(interval)
 	}, [codeTimer])
 
-	// Восстановление роли
-	useEffect(() => {
-		if (!isOpen) return
-		const savedRole = localStorage.getItem(STORAGE_KEYS.PENDING_ROLE) as
-			| 'tutor'
-			| 'student_or_parent'
-			| null
-		if (savedRole) setSelectedRole(savedRole)
-	}, [isOpen])
+	// ========================================================================
+	// 🔹 handleClose
+	// ========================================================================
 
-	// handleClose
 	const handleClose = useCallback(() => {
 		const isMigrationPending =
 			localStorage.getItem(STORAGE_KEYS.MIGRATION_PENDING) === 'true'
@@ -177,7 +219,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 		localStorage.removeItem(STORAGE_KEYS.MIGRATION_EMAIL)
 		localStorage.removeItem(STORAGE_KEYS.MIGRATION_SHOW_CODE_VERIFICATION)
 		localStorage.removeItem(STORAGE_KEYS.MIGRATION_PENDING)
-		localStorage.removeItem(STORAGE_KEYS.MIGRATION_TG_USER) // 🔹 Очистка
+		localStorage.removeItem(STORAGE_KEYS.MIGRATION_TG_USER)
 		onClose()
 	}, [onClose, isClosable])
 
@@ -204,12 +246,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 		if (!emailFormData.email.trim()) errors.email = 'Email обязателен'
 		else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailFormData.email))
 			errors.email = 'Некорректный формат email'
-
 		const passwordError = validatePassword(emailFormData.password)
 		if (passwordError) errors.password = passwordError
 		if (emailFormData.password !== emailFormData.confirmPassword)
 			errors.confirmPassword = 'Пароли не совпадают'
-
 		setFormErrors(errors)
 		return Object.keys(errors).length === 0
 	}
@@ -228,7 +268,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 		e.preventDefault()
 		setGlobalError('')
 		if (!validateMigrationForm()) return
-
 		const token =
 			telegramAuthToken || localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN)
 		if (!token) {
@@ -237,7 +276,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 			)
 			return
 		}
-
 		setIsSubmitting(true)
 		setCodeError('')
 		try {
@@ -274,11 +312,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 			localStorage.removeItem(STORAGE_KEYS.MIGRATION_EMAIL)
 			localStorage.removeItem(STORAGE_KEYS.MIGRATION_SHOW_CODE_VERIFICATION)
 			localStorage.removeItem(STORAGE_KEYS.MIGRATION_PENDING)
-			localStorage.removeItem(STORAGE_KEYS.MIGRATION_TG_USER) // 🔹 Очистка при успехе
+			localStorage.removeItem(STORAGE_KEYS.MIGRATION_TG_USER)
+
+			// Сначала закрываем модалку, потом вызываем логин
+			onClose()
 			if (selectedRole && telegramUserData && onLogin) {
 				onLogin(selectedRole, telegramUserData)
 			}
-			handleClose()
 		} catch (error: any) {
 			console.error('❌ [VERIFY] Ошибка:', error)
 			setCodeError(error.message || 'Неверный код. Попробуйте ещё раз')
@@ -325,15 +365,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 				localStorage.setItem(
 					STORAGE_KEYS.MIGRATION_TG_USER,
 					JSON.stringify(user),
-				) // 🔹 Сохраняем в LS
+				)
 				setShowMigrationModal(true)
 				localStorage.setItem(STORAGE_KEYS.MIGRATION_PENDING, 'true')
-				if (user.username) {
+				if (user.username)
 					setEmailFormData(prev => ({
 						...prev,
 						email: `${user.username}@telegram.local`,
 					}))
-				}
 			} else {
 				if (response.role)
 					localStorage.setItem(STORAGE_KEYS.USER_ROLE, response.role)
@@ -395,13 +434,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 		localStorage.removeItem(STORAGE_KEYS.MIGRATION_EMAIL)
 		localStorage.removeItem(STORAGE_KEYS.MIGRATION_SHOW_CODE_VERIFICATION)
 		localStorage.removeItem(STORAGE_KEYS.MIGRATION_PENDING)
-		localStorage.removeItem(STORAGE_KEYS.MIGRATION_TG_USER) // 🔹 Очистка
+		localStorage.removeItem(STORAGE_KEYS.MIGRATION_TG_USER)
 		setGlobalError('')
 	}
-
-	// ========================================================================
-	// 🔹 РЕНДЕР-МЕТОДЫ
-	// ========================================================================
 
 	const renderCloseButton = () => {
 		if (showMigrationModal || isClosable === false) return null
@@ -805,10 +840,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 		</div>
 	)
 
-	// ========================================================================
 	return (
 		<>
-			{/* 🔒 Клик по фону НЕ закрывает модалку, если идет миграция */}
 			<div
 				className={styles.overlay}
 				onClick={

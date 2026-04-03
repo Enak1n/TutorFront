@@ -170,7 +170,7 @@ export const verifyEmail = async (
 
 export const loginWithTelegram = async (
 	telegramData: TelegramUser,
-	role: 'tutor' | 'student_or_parent' | 'admin',
+	role: 'tutor' | 'student_or_parent' | 'admin' | null,
 ): Promise<LoginResponse> => {
 	try {
 		const { data } = await apiClient.post<LoginResponse>('/auth/telegram', {
