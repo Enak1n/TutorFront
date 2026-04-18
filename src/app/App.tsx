@@ -53,7 +53,7 @@ const AppContent = ({
 	navigateToProfile,
 	navigateToChat,
 }: AppContentProps) => {
-	const defaultAuthenticatedRoute = '/schedule'
+	const defaultAuthenticatedRoute = '/'
 
 	const routes = [
 		{

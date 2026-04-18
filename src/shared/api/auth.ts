@@ -62,6 +62,12 @@ export interface LoginV2Request {
 
 export interface LoginV2Response {
 	id: string
+	telegramId: number
+	firstName: string
+	lastName: string
+	username: string
+	photoUrl: string
+	authDate: string
 	accessToken: string
 	role: string
 }

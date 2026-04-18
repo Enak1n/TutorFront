@@ -74,7 +74,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 	)
 
 	const [emailFormData, setEmailFormData] = useState<MigrationFormData>(() => ({
-		email: getFromLS(STORAGE_KEYS.MIGRATION_EMAIL) || '',
+		email: '',
 		password: '',
 		confirmPassword: '',
 	}))
@@ -401,12 +401,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 				localStorage.setItem(STORAGE_KEYS.USER_ROLE, response.role)
 			if (selectedRole && onLogin) {
 				onLogin(selectedRole, {
-					id: 0,
-					first_name: emailLoginData.email.split('@')[0],
-					last_name: '',
-					username: emailLoginData.email.split('@')[0],
-					photo_url: undefined,
-					auth_date: Math.floor(Date.now() / 1000).toString(),
+					id: response.telegramId,
+					first_name: response.firstName,
+					last_name: response.lastName,
+					username: response.username,
+					photo_url: response.photoUrl,
+					auth_date: response.authDate,
 					hash: '',
 				})
 			}
