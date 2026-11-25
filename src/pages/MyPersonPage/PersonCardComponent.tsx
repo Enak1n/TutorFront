@@ -2,7 +2,7 @@ import type React from "react"
 import {ConnectedPerson} from "@api/my-person";
 // @ts-ignore
 import styles from "./PersonCardComponent.module.scss"
-import { useSSE } from "../../shared/sse/SSEComponent/SSEContext";
+import { useSSE, isUserOnline } from "../../shared/sse/SSEComponent/SSEContext";
 
 interface PersonCardProps {
     person: ConnectedPerson;
@@ -13,8 +13,7 @@ interface PersonCardProps {
 export const PersonCard: React.FC<PersonCardProps> = ({ person, onClick, onMessageClick }) => {
 
     const { sseData } = useSSE();
-    const userStatus = sseData.userPresence[person.id];
-    const isOnline = userStatus === 'online';
+    const isOnline = isUserOnline(sseData.userPresence, person.id);
 
     const handleMessageClick = (e: React.MouseEvent) => {
         e.stopPropagation();

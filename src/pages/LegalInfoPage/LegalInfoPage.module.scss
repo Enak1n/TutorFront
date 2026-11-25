@@ -2,16 +2,16 @@
   max-width: 850px;
   margin: 40px auto;
   padding: 30px;
-  background-color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border-radius: 10px;
+  background-color: var(--surface);
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-sm);
   line-height: 1.6;
-  color: #333;
+  color: var(--text);
 }
 
 .mainTitle {
   text-align: center;
-  color: #007bff;
+  color: var(--accent);
   font-size: 2.2em;
   margin-bottom: 10px;
 }
@@ -19,7 +19,7 @@
 .metaInfo {
   text-align: center;
   font-size: 0.9em;
-  color: #6c757d;
+  color: var(--text-muted);
   margin-bottom: 5px;
 }
 
@@ -27,13 +27,13 @@
   text-align: justify;
   margin-top: 30px;
   padding-bottom: 20px;
-  border-bottom: 1px dashed #eee;
+  border-bottom: 1px dashed var(--border);
 }
 
 .section {
   margin-top: 30px;
   padding-top: 15px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border);
 
   &:first-of-type {
     border-top: none;
@@ -41,17 +41,17 @@
 }
 
 .sectionTitle {
-  color: #333;
+  color: var(--text);
   font-size: 1.6em;
   font-weight: 600;
   margin-bottom: 15px;
-  border-left: 4px solid #007bff;
+  border-left: 4px solid var(--accent);
   padding-left: 10px;
 }
 
 h3 {
   font-size: 1.2em;
-  color: #555;
+  color: var(--text-muted);
   margin-top: 20px;
   margin-bottom: 10px;
 }
@@ -69,7 +69,7 @@ h3 {
 .definitions {
   li {
     padding: 5px 0;
-    border-bottom: 1px dotted #ccc;
+    border-bottom: 1px dotted var(--border-strong);
 
     &:last-child {
       border-bottom: none;
@@ -86,16 +86,16 @@ h3 {
 }
 
 .warning {
-  color: #dc3545;
+  color: var(--danger);
   font-weight: bold;
   padding: 10px;
-  border: 1px solid #dc3545;
-  border-radius: 5px;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-xs);
   margin: 15px 0;
 }
 
 .warningInline {
-  color: #dc3545;
+  color: var(--danger);
   font-weight: 600;
   display: block;
   margin-top: 5px;
@@ -125,7 +125,7 @@ h3 {
 
 .highlightedText {
   font-weight: 600;
-  color: #0056b3;
+  color: var(--accent-hover);
   display: block;
   margin-top: 5px;
   padding: 5px 0;

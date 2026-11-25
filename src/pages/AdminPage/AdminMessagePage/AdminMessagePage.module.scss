@@ -1,14 +1,14 @@
-$primary-color: #007bff;
-$secondary-color: #f8f9fa;
-$border-color: #ddd;
+$primary-color: var(--accent);
+$secondary-color: var(--surface-2);
+$border-color: var(--border);
 
 .container {
   max-width: 1200px;
   margin: 20px auto;
   padding: 20px;
-  background-color: #fff;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
+  background-color: var(--surface);
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-sm);
 
   @media (max-width: 768px) {
     margin: 0;
@@ -22,7 +22,7 @@ $border-color: #ddd;
 .loadingContainer, .error, .emptyList {
   text-align: center;
   padding: 20px;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .pageTitle {
@@ -30,13 +30,13 @@ $border-color: #ddd;
   border-bottom: 1px solid $border-color;
   padding-bottom: 10px;
   font-size: 1.5em;
-  color: #333;
+  color: var(--text);
 }
 
 .totalCountInfo {
   text-align: center;
   margin-bottom: 20px;
-  color: #6c757d;
+  color: var(--text-muted);
 }
 
 .dialogueList {
@@ -48,12 +48,12 @@ $border-color: #ddd;
   display: flex;
   align-items: center;
   padding: 15px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: #e9f5ff;
+    background-color: var(--accent-soft);
   }
 
   .usersInfo {
@@ -107,7 +107,7 @@ $border-color: #ddd;
 
     .additionalInfo {
       font-size: 0.85em;
-      color: #999;
+      color: var(--text-subtle);
       margin-top: 1px;
       white-space: nowrap;
       overflow: hidden;
@@ -134,10 +134,10 @@ $border-color: #ddd;
 
 .applyFilterButton {
   padding: 10px 15px;
-  background-color: #4a90e2;
-  color: white;
+  background-color: var(--accent);
+  color: var(--text-on-accent);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background-color 0.2s;
   font-size: 16px;
@@ -145,18 +145,18 @@ $border-color: #ddd;
 }
 
 .applyFilterButton:hover:not(:disabled) {
-  background-color: #357bd8;
+  background-color: var(--accent);
 }
 
 .applyFilterButton:disabled {
-  background-color: #a8a8a8;
+  background-color: var(--border-strong);
   cursor: not-allowed;
 }
 
 .searchInput {
   padding: 10px 15px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
   width: auto;
   min-width: 300px;
   font-size: 16px;
@@ -166,7 +166,7 @@ $border-color: #ddd;
 }
 
 .searchInput:focus {
-  border-color: #4a90e2;
+  border-color: var(--accent);
   outline: none;
 }
 
@@ -177,10 +177,10 @@ $border-color: #ddd;
   min-width: 300px;
   max-height: 200px;
   overflow-y: auto;
-  background: white;
-  border: 1px solid #ddd;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 0 0 8px 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
   z-index: 20;
 }
 
@@ -190,22 +190,22 @@ $border-color: #ddd;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border);
 }
 
 .searchResultItem:hover {
-  background-color: #f0f8ff;
+  background-color: var(--surface-2);
 }
 
 .username {
-  color: #666;
+  color: var(--text-muted);
   font-size: 0.9em;
 }
 
 .searchStatus, .searchError {
   margin-left: 10px;
   font-size: 0.9em;
-  color: #999;
+  color: var(--text-subtle);
   display: flex;
   align-items: center;
   gap: 5px;
@@ -216,5 +216,5 @@ $border-color: #ddd;
 }
 
 .searchError {
-  color: #dc3545;
+  color: var(--danger);
 }

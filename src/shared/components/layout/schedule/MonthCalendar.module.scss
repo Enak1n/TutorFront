@@ -1,0 +1,235 @@
+.calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.weekdays,
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.weekdays span {
+  padding: 2px 0 6px;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  text-align: center;
+}
+
+.weekdays .weekendName {
+  color: var(--text-subtle);
+}
+
+.grid {
+  transition: opacity var(--transition);
+}
+
+.loading {
+  opacity: 0.6;
+}
+
+.day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 92px;
+  padding: 6px 8px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  text-align: left;
+  transition: background-color var(--transition), border-color var(--transition), box-shadow var(--transition);
+
+  &:hover {
+    background: var(--surface-3);
+  }
+
+  @media (max-width: 640px) {
+    min-height: 56px;
+    padding: 4px 5px 5px;
+  }
+}
+
+.number {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1.2;
+
+  @media (max-width: 640px) {
+    font-size: var(--text-xs);
+  }
+}
+
+// Дни соседних месяцев — приглушённые (как на макете)
+.outside {
+  .number {
+    color: var(--text-subtle);
+    opacity: 0.7;
+  }
+}
+
+// Сегодня — лаймовая заливка
+.today {
+  background: var(--highlight);
+  color: var(--highlight-text);
+
+  &:hover {
+    background: color-mix(in srgb, var(--highlight) 88%, var(--text));
+  }
+
+  .number {
+    font-weight: 800;
+  }
+
+  .dot {
+    background: var(--highlight-text);
+  }
+}
+
+// Выбранный день — лаймовая рамка
+.selected {
+  border-color: var(--highlight);
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--highlight);
+
+  .number {
+    font-weight: 800;
+  }
+
+  &.today {
+    background: var(--highlight);
+    border-color: color-mix(in srgb, var(--highlight) 60%, var(--text));
+  }
+}
+
+.markers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  min-height: 16px;
+}
+
+.dots {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+}
+
+.dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+
+  @media (max-width: 640px) {
+    width: 5px;
+    height: 5px;
+  }
+}
+
+.more {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-size: var(--text-xs);
+  font-weight: 800;
+}
+
+.free {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--success-soft);
+  color: var(--success-hover);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.5;
+
+  @media (max-width: 640px) {
+    width: 6px;
+    height: 6px;
+    padding: 0;
+    font-size: 0;
+    background: var(--success);
+  }
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding-top: 8px;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  .free {
+    width: auto;
+    height: auto;
+    padding: 1px 6px;
+    font-size: 10px;
+    background: var(--success-soft);
+  }
+}
+
+.legendCount {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.legendSwatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.legendToday {
+  background: var(--highlight);
+}
+
+// Репетитор: дни с отмеченным свободным временем — зелёная штриховка поверх фона ячейки
+.hasFree,
+.hasFree:hover {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    color-mix(in srgb, var(--success) 16%, transparent) 0 5px,
+    transparent 5px 10px
+  );
+  box-shadow: inset 3px 0 0 var(--success);
+}
+
+.hasFree.selected {
+  box-shadow: inset 3px 0 0 var(--success), 0 0 0 1px var(--highlight);
+}

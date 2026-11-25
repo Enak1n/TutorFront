@@ -1,12 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import AdminDashboard from './AdminDashboard';
 import { getTutorSchedulesByDay, TutorColumn } from '@api/admin';
+import { MonthCalendar } from '@components/layout/schedule/MonthCalendar';
+import { CalendarToolbar, type CalendarView } from '@components/layout/schedule/CalendarToolbar';
+import { addDays, addMonths, formatDayTitle, formatMonthTitle, isSameDay, startOfDay, toDateKey } from '../../shared/utils/date';
 // @ts-ignore
 import styles from './AdminPage.module.scss';
 
+const VIEWS: CalendarView[] = ['month', 'day'];
 
 export const AdminPage: React.FC = () => {
-    const [currentDate, setCurrentDate] = useState(new Date());
+    const [view, setView] = useState<CalendarView>('month');
+    const [currentDate, setCurrentDate] = useState(() => startOfDay(new Date()));
     const [tutorSchedules, setTutorSchedules] = useState<TutorColumn[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -15,14 +20,8 @@ export const AdminPage: React.FC = () => {
         setIsLoading(true);
         setError(null);
 
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const dateString = `${year}-${month}-${day}`;
-
         try {
-            const data: TutorColumn[] = await getTutorSchedulesByDay(dateString); // 💡 Ожидаем новый тип
-            setTutorSchedules(data);
+            setTutorSchedules(await getTutorSchedulesByDay(toDateKey(date)));
         } catch (err) {
             console.error('Ошибка загрузки расписаний администратора:', err);
             setError('Не удалось загрузить расписания репетиторов.');
@@ -33,68 +32,49 @@ export const AdminPage: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        fetchSchedules(currentDate);
-    }, [currentDate, fetchSchedules]);
+        if (view === 'day') fetchSchedules(currentDate);
+    }, [view, currentDate, fetchSchedules]);
 
-    const changeDay = (delta: number) => {
-        setCurrentDate(prevDate => {
-            const newDate = new Date(prevDate);
-            newDate.setDate(newDate.getDate() + delta);
-            return newDate;
-        });
+    const today = new Date();
+    const isTodayVisible =
+        view === 'month'
+            ? currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() === today.getMonth()
+            : isSameDay(currentDate, today);
+
+    const shift = (direction: 1 | -1) =>
+        setCurrentDate(date => (view === 'month' ? addMonths(date, direction) : addDays(date, direction)));
+
+    const openDay = (date: Date) => {
+        setCurrentDate(startOfDay(date));
+        setView('day');
     };
-
-    const goToToday = () => {
-        setCurrentDate(new Date());
-    };
-
-    const displayDate = currentDate.toLocaleDateString('ru-RU', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
-
 
     return (
         <div className={styles.adminPageContainer}>
             <div className={styles.container}>
                 <h1 className={styles.pageTitle}>Загрузка репетиторов</h1>
 
-                <div className={styles.calendarControls}>
-                    <button
-                        onClick={() => changeDay(-1)}
-                        disabled={isLoading}
-                        className={styles.navButton}
-                        aria-label="Предыдущий день"
-                    >
-                        ←
-                    </button>
-                    <button
-                        onClick={goToToday}
-                        disabled={isLoading}
-                        className={`${styles.navButton} ${styles.todayButton}`}
-                    >
-                        Сегодня
-                    </button>
-                    <button
-                        onClick={() => changeDay(1)}
-                        disabled={isLoading}
-                        className={styles.navButton}
-                        aria-label="Следующий день"
-                    >
-                        →
-                    </button>
-                    <h3 className={styles.currentDate}>{displayDate}</h3>
+                <div className={styles.calendarCard}>
+                    <CalendarToolbar
+                        views={VIEWS}
+                        view={view}
+                        onViewChange={setView}
+                        title={view === 'month' ? formatMonthTitle(currentDate) : formatDayTitle(currentDate)}
+                        onPrev={() => shift(-1)}
+                        onNext={() => shift(1)}
+                        onToday={() => setCurrentDate(startOfDay(new Date()))}
+                        isTodayVisible={isTodayVisible}
+                    />
+
+                    {view === 'month' ? (
+                        <MonthCalendar role='admin' month={currentDate} selectedDate={currentDate} onSelectDate={openDay} />
+                    ) : (
+                        <>
+                            {error && <p className={styles.errorMessage}>Ошибка: {error}</p>}
+                            <AdminDashboard tutorSchedules={tutorSchedules} isLoading={isLoading} selectedDate={currentDate} />
+                        </>
+                    )}
                 </div>
-
-                {error && <p className={styles.errorMessage}>Ошибка: {error}</p>}
-
-                <AdminDashboard
-                    tutorSchedules={tutorSchedules}
-                    isLoading={isLoading}
-                    selectedDate={currentDate}
-                />
             </div>
         </div>
     );

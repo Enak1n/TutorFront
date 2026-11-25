@@ -34,7 +34,6 @@ export interface ChatState {
     currentChatMessages: ChatMessage[];
     activeChatUser: string | null;
     unreadCount: number;
-    onlineUsers: Record<string, boolean>;
     historyPage: number;
     hasMoreHistory: boolean;
 }
@@ -49,7 +48,6 @@ export interface ChatContextType {
     loadHistory: (withUserId: string, pageNumber?: number, pageSize?: number) => Promise<void>;
     markAsRead: (fromUserId: string) => Promise<void>;
     setActiveChat: (userId: string | null) => void;
-    onlineUsers: Record<string, boolean>;
     startChatConnection: () => Promise<void>;
     stopChatConnection: () => Promise<void>;
     leaveChat: () => Promise<void>;

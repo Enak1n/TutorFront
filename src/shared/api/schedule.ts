@@ -67,16 +67,6 @@ export const getTutorStudents = async (): Promise<TutorStudentsResponse> => {
 }
 
 /**
- * Получить все занятия для текущего пользователя за указанный период
- */
-export const getLessons = async (startDate: string, endDate: string): Promise<Lesson[]> => {
-    const response = await apiClient.get("/lesson", {
-        params: { startDate, endDate },
-    })
-    return response.data
-}
-
-/**
  * Получить занятия для конкретной недели
  */
 export const getWeekLessons = async (weekOffset = 0): Promise<Lesson[]> => {
@@ -136,14 +126,6 @@ export const deleteLesson = async (lessonId: string): Promise<void> => {
     });
 }
 
-
-/**
- * Отменить занятие
- */
-export const cancelLesson = async (lessonId: string, reason?: string): Promise<Lesson> => {
-    const response = await apiClient.post(`lesson/${lessonId}/cancel`, { reason })
-    return response.data
-}
 
 /**
  * Получить занятие

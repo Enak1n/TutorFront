@@ -1,301 +1,442 @@
 // src/shared/components/layout/Header/LoginModal.tsx
 'use client'
 
-import React from 'react'
-import { useState, useEffect, useCallback } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
-	TelegramLoginButton,
-	type TelegramUser,
-} from '@components/auth/TelegramLoginButton'
+	type AuthRole,
+	type LoginV2Response,
+	loginV2,
+	registerV2,
+	requestPasswordReset,
+	requestCode,
+	resetPassword,
+	verifyEmail,
+} from '@api/auth'
 // @ts-ignore
 import styles from './LoginModal.module.scss'
-import {
-	loginV2,
-	attachEmail,
-	requestCode,
-	verifyEmail,
-	loginWithTelegram,
-} from '@api/auth'
 
 export interface LoginModalProps {
 	isOpen: boolean
 	onClose: () => void
-	onLogin: (
-		role: 'tutor' | 'student_or_parent',
-		telegramData: TelegramUser,
-	) => void
+	onLogin: (authData: LoginV2Response) => void | Promise<void>
 	isClosable?: boolean
+	initialMode?: 'login' | 'register'
 }
 
-interface MigrationFormData {
+interface LoginFormData {
 	email: string
+	password: string
+}
+
+interface RegisterFormData extends LoginFormData {
+	firstName: string
+	lastName: string
+	confirmPassword: string
+	role: AuthRole | null
+}
+
+interface ForgotPasswordFormData {
+	email: string
+}
+
+interface ResetPasswordFormData {
 	password: string
 	confirmPassword: string
 }
 
-export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
-const CODE_TIMER_DURATION = 2 * 60 * 1000
+type AuthMode = 'login' | 'register' | 'forgot-password'
+type AuthStage = 'form' | 'verify' | 'reset-password'
 
-const STORAGE_KEYS = {
-	PENDING_ROLE: 'pendingRole',
-	MIGRATION_TIMER: 'migration_code_timer',
-	MIGRATION_EMAIL: 'migration_email',
-	MIGRATION_SHOW_CODE_VERIFICATION: 'migration_show_code_verification',
-	MIGRATION_PENDING: 'migration_pending',
-	MIGRATION_TG_USER: 'migration_tg_user',
-	AUTH_TOKEN: 'authToken',
-	USER_ROLE: 'userRole',
+export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const CODE_TIMER_DURATION = 2 * 60
+
+const REGISTRATION_VERIFICATION_STORAGE_KEYS = {
+	PENDING: 'registration_verification_pending',
+	EMAIL: 'registration_verification_email',
+	RESEND_AVAILABLE_AT: 'registration_verification_resend_available_at',
 } as const
+
+const emptyLoginForm: LoginFormData = {
+	email: '',
+	password: '',
+}
+
+const emptyRegisterForm: RegisterFormData = {
+	email: '',
+	password: '',
+	firstName: '',
+	lastName: '',
+	confirmPassword: '',
+	role: null,
+}
+
+const emptyForgotPasswordForm: ForgotPasswordFormData = {
+	email: '',
+}
+
+const emptyResetPasswordForm: ResetPasswordFormData = {
+	password: '',
+	confirmPassword: '',
+}
+
+const getStoredRegistrationVerification = (): {
+	email: string
+	codeTimer: number
+} | null => {
+	if (typeof window === 'undefined') return null
+
+	const isPending =
+		localStorage.getItem(REGISTRATION_VERIFICATION_STORAGE_KEYS.PENDING) ===
+		'true'
+	const email = localStorage.getItem(
+		REGISTRATION_VERIFICATION_STORAGE_KEYS.EMAIL,
+	)
+
+	if (!isPending || !email) return null
+
+	const resendAvailableAt = Number(
+		localStorage.getItem(
+			REGISTRATION_VERIFICATION_STORAGE_KEYS.RESEND_AVAILABLE_AT,
+		) ?? '0',
+	)
+	const codeTimer =
+		resendAvailableAt > Date.now()
+			? Math.ceil((resendAvailableAt - Date.now()) / 1000)
+			: 0
+
+	return { email, codeTimer }
+}
+
+export const hasPendingRegistrationVerification = () =>
+	getStoredRegistrationVerification() !== null
+
+const persistRegistrationVerification = (
+	email: string,
+	timerSeconds = CODE_TIMER_DURATION,
+) => {
+	if (typeof window === 'undefined') return
+
+	localStorage.setItem(REGISTRATION_VERIFICATION_STORAGE_KEYS.PENDING, 'true')
+	localStorage.setItem(REGISTRATION_VERIFICATION_STORAGE_KEYS.EMAIL, email)
+	localStorage.setItem(
+		REGISTRATION_VERIFICATION_STORAGE_KEYS.RESEND_AVAILABLE_AT,
+		String(Date.now() + timerSeconds * 1000),
+	)
+}
+
+const clearRegistrationVerification = () => {
+	if (typeof window === 'undefined') return
+
+	Object.values(REGISTRATION_VERIFICATION_STORAGE_KEYS).forEach(key => {
+		localStorage.removeItem(key)
+	})
+}
 
 export const LoginModal: React.FC<LoginModalProps> = ({
 	isOpen,
 	onClose,
 	onLogin,
 	isClosable = true,
+	initialMode = 'login',
 }) => {
-	// ========================================================================
-	// 🔹 ЛЕНИВЫЕ ИНИЦИАЛИЗАТОРЫ — для F5 / первого монтирования
-	// ========================================================================
-
-	// Читаем из LS только если работаем в браузере
-	const getFromLS = (key: string) =>
-		typeof window !== 'undefined' ? localStorage.getItem(key) : null
-
-	const [selectedRole, setSelectedRole] = useState<
-		'tutor' | 'student_or_parent' | null
-	>(null)
-
-	const [showMigrationModal, setShowMigrationModal] = useState(
-		() => getFromLS(STORAGE_KEYS.MIGRATION_PENDING) === 'true',
+	const [authMode, setAuthMode] = useState<AuthMode>(() =>
+		hasPendingRegistrationVerification() ? 'register' : initialMode,
 	)
-
-	const [showCodeVerification, setShowCodeVerification] = useState(
-		() => getFromLS(STORAGE_KEYS.MIGRATION_SHOW_CODE_VERIFICATION) === 'true',
+	const [authStage, setAuthStage] = useState<AuthStage>(() =>
+		hasPendingRegistrationVerification() ? 'verify' : 'form',
 	)
-
-	const [emailFormData, setEmailFormData] = useState<MigrationFormData>(() => ({
-		email: '',
-		password: '',
-		confirmPassword: '',
-	}))
-
-	const [codeTimer, setCodeTimer] = useState(() => {
-		const savedTimer = getFromLS(STORAGE_KEYS.MIGRATION_TIMER)
-		if (savedTimer) {
-			const diff = parseInt(savedTimer, 10) - Date.now()
-			return diff > 0 ? Math.ceil(diff / 1000) : 0
-		}
-		return 0
+	const [loginData, setLoginData] = useState<LoginFormData>(() => {
+		const pendingVerification = getStoredRegistrationVerification()
+		return pendingVerification
+			? { ...emptyLoginForm, email: pendingVerification.email }
+			: emptyLoginForm
 	})
-
-	const [telegramUserData, setTelegramUserData] = useState<TelegramUser | null>(
-		() => {
-			const saved = getFromLS(STORAGE_KEYS.MIGRATION_TG_USER)
-			if (saved) {
-				try {
-					return JSON.parse(saved)
-				} catch {}
-			}
-			return null
-		},
-	)
-
-	const [telegramAuthToken, setTelegramAuthToken] = useState<string | null>(
-		null,
-	)
-	const [loginMethod, setLoginMethod] = useState<'telegram' | 'email'>(
-		'telegram',
-	)
-	const [formErrors, setFormErrors] = useState<Partial<MigrationFormData>>({})
-	const [isSubmitting, setIsSubmitting] = useState(false)
-	const [globalError, setGlobalError] = useState<string>('')
-	const [verificationCode, setVerificationCode] = useState('')
-	const [codeError, setCodeError] = useState<string>('')
-	const [isCodeSubmitting, setIsCodeSubmitting] = useState(false)
-	const [emailLoginData, setEmailLoginData] = useState({
-		email: '',
-		password: '',
+	const [registerData, setRegisterData] = useState<RegisterFormData>(() => {
+		const pendingVerification = getStoredRegistrationVerification()
+		return pendingVerification
+			? { ...emptyRegisterForm, email: pendingVerification.email }
+			: emptyRegisterForm
 	})
-	const [emailLoginErrors, setEmailLoginErrors] = useState<
-		Partial<Record<keyof typeof emailLoginData, string>>
+	const [forgotPasswordData, setForgotPasswordData] =
+		useState<ForgotPasswordFormData>(emptyForgotPasswordForm)
+	const [resetPasswordData, setResetPasswordData] =
+		useState<ResetPasswordFormData>(emptyResetPasswordForm)
+	const [loginErrors, setLoginErrors] = useState<Partial<LoginFormData>>({})
+	const [registerErrors, setRegisterErrors] = useState<
+		Partial<Record<keyof RegisterFormData, string>>
 	>({})
+	const [forgotPasswordErrors, setForgotPasswordErrors] = useState<
+		Partial<ForgotPasswordFormData>
+	>({})
+	const [resetPasswordErrors, setResetPasswordErrors] = useState<
+		Partial<Record<keyof ResetPasswordFormData, string>>
+	>({})
+	const [verificationCode, setVerificationCode] = useState('')
+	const [codeError, setCodeError] = useState('')
+	const [globalError, setGlobalError] = useState('')
+	const [successMessage, setSuccessMessage] = useState('')
+	const [codeTimer, setCodeTimer] = useState(
+		() => getStoredRegistrationVerification()?.codeTimer ?? 0,
+	)
+	const [isSubmitting, setIsSubmitting] = useState(false)
 
-	// ========================================================================
-	// 🔹 ЭФФЕКТ: Восстановление состояния при каждом открытии модалки
-	// (нужно для случаев после выхода и повторного входа)
-	// ========================================================================
+	const activeEmail =
+		authMode === 'forgot-password'
+			? forgotPasswordData.email.trim()
+			: registerData.email.trim()
+	const isRegistrationVerificationPending =
+		authStage === 'verify' && Boolean(activeEmail)
 
-	// Флаг, чтобы не восстанавливать при первом монтировании (уже сделано ленивыми инициализаторами)
-	const hasInitializedRef = React.useRef(false)
+	const canClose =
+		isClosable && !isSubmitting && !isRegistrationVerificationPending
+
+	const submitButtonText = useMemo(() => {
+		if (isSubmitting)
+			return authMode === 'login' ? 'Входим...' : 'Отправляем...'
+		return authMode === 'login' ? 'Войти' : 'Зарегистрироваться'
+	}, [authMode, isSubmitting])
 
 	useEffect(() => {
 		if (!isOpen) return
-		if (hasInitializedRef.current) {
-			// 🔹 Восстанавливаем состояние при повторных открытиях (после выхода)
-			const isMigrationPending =
-				getFromLS(STORAGE_KEYS.MIGRATION_PENDING) === 'true'
-			const savedEmail = getFromLS(STORAGE_KEYS.MIGRATION_EMAIL)
-			const savedShowCode = getFromLS(
-				STORAGE_KEYS.MIGRATION_SHOW_CODE_VERIFICATION,
-			)
-			const savedTimer = getFromLS(STORAGE_KEYS.MIGRATION_TIMER)
-			const savedTgUser = getFromLS(STORAGE_KEYS.MIGRATION_TG_USER)
 
-			if (isMigrationPending && savedEmail) {
-				setEmailFormData(prev => ({ ...prev, email: savedEmail }))
-				setShowMigrationModal(true)
+		const pendingVerification = getStoredRegistrationVerification()
 
-				if (savedShowCode === 'true' && savedTimer) {
-					const endTime = parseInt(savedTimer, 10)
-					const now = Date.now()
-					if (now < endTime) {
-						setShowCodeVerification(true)
-						setCodeTimer(Math.ceil((endTime - now) / 1000))
-					}
-				}
-			}
-
-			if (savedTgUser) {
-				try {
-					setTelegramUserData(JSON.parse(savedTgUser))
-				} catch {}
-			}
-
-			const savedRole = getFromLS(STORAGE_KEYS.PENDING_ROLE) as
-				| 'tutor'
-				| 'student_or_parent'
-				| null
-			if (savedRole) setSelectedRole(savedRole)
+		if (pendingVerification) {
+			setAuthMode('register')
+			setAuthStage('verify')
+			setLoginData({ ...emptyLoginForm, email: pendingVerification.email })
+			setRegisterData({
+				...emptyRegisterForm,
+				email: pendingVerification.email,
+			})
+			setForgotPasswordData(emptyForgotPasswordForm)
+			setResetPasswordData(emptyResetPasswordForm)
+			setCodeTimer(pendingVerification.codeTimer)
+		} else {
+			setAuthMode(initialMode)
+			setAuthStage('form')
+			setLoginData(emptyLoginForm)
+			setRegisterData(emptyRegisterForm)
+			setForgotPasswordData(emptyForgotPasswordForm)
+			setResetPasswordData(emptyResetPasswordForm)
+			setCodeTimer(0)
 		}
-		hasInitializedRef.current = true
-	}, [isOpen])
 
-	// ========================================================================
-	// 🔹 Тикер таймера
-	// ========================================================================
+		setLoginErrors({})
+		setRegisterErrors({})
+		setForgotPasswordErrors({})
+		setResetPasswordErrors({})
+		setVerificationCode('')
+		setCodeError('')
+		setGlobalError('')
+		setSuccessMessage('')
+	}, [isOpen, initialMode])
 
 	useEffect(() => {
 		if (codeTimer <= 0) return
-		const interval = setInterval(() => {
-			setCodeTimer(prev => {
-				if (prev <= 1) {
-					localStorage.removeItem(STORAGE_KEYS.MIGRATION_TIMER)
-					localStorage.removeItem(STORAGE_KEYS.MIGRATION_EMAIL)
-					localStorage.removeItem(STORAGE_KEYS.MIGRATION_SHOW_CODE_VERIFICATION)
-					localStorage.removeItem(STORAGE_KEYS.MIGRATION_PENDING)
-					localStorage.removeItem(STORAGE_KEYS.MIGRATION_TG_USER)
-					return 0
-				}
-				return prev - 1
-			})
+
+		const interval = window.setInterval(() => {
+			setCodeTimer(prev => Math.max(prev - 1, 0))
 		}, 1000)
-		return () => clearInterval(interval)
+
+		return () => window.clearInterval(interval)
 	}, [codeTimer])
 
-	// ========================================================================
-	// 🔹 handleClose
-	// ========================================================================
-
-	const handleClose = useCallback(() => {
-		const isMigrationPending =
-			localStorage.getItem(STORAGE_KEYS.MIGRATION_PENDING) === 'true'
-		if (isMigrationPending && isClosable === false) return
-
-		setSelectedRole(null)
-		setTelegramUserData(null)
-		setTelegramAuthToken(null)
-		setShowMigrationModal(false)
-		setShowCodeVerification(false)
-		setCodeTimer(0)
-		setVerificationCode('')
-		setEmailFormData({ email: '', password: '', confirmPassword: '' })
-		setEmailLoginData({ email: '', password: '' })
-		setFormErrors({})
-		setEmailLoginErrors({})
-		setGlobalError('')
-		setCodeError('')
-		localStorage.removeItem(STORAGE_KEYS.PENDING_ROLE)
-		localStorage.removeItem(STORAGE_KEYS.MIGRATION_TIMER)
-		localStorage.removeItem(STORAGE_KEYS.MIGRATION_EMAIL)
-		localStorage.removeItem(STORAGE_KEYS.MIGRATION_SHOW_CODE_VERIFICATION)
-		localStorage.removeItem(STORAGE_KEYS.MIGRATION_PENDING)
-		localStorage.removeItem(STORAGE_KEYS.MIGRATION_TG_USER)
-		onClose()
-	}, [onClose, isClosable])
-
-	// ========================================================================
 	if (!isOpen) return null
-	// ========================================================================
 
-	const handleRoleSelect = (role: 'tutor' | 'student_or_parent') => {
-		setSelectedRole(role)
-		localStorage.setItem(STORAGE_KEYS.PENDING_ROLE, role)
+	const clearMessages = () => {
 		setGlobalError('')
+		setSuccessMessage('')
 	}
 
-	const validatePassword = (password: string): string | null => {
+	const resetModalState = () => {
+		setAuthStage('form')
+		setLoginData(emptyLoginForm)
+		setRegisterData(emptyRegisterForm)
+		setForgotPasswordData(emptyForgotPasswordForm)
+		setResetPasswordData(emptyResetPasswordForm)
+		setLoginErrors({})
+		setRegisterErrors({})
+		setForgotPasswordErrors({})
+		setResetPasswordErrors({})
+		setVerificationCode('')
+		setCodeError('')
+		setGlobalError('')
+		setSuccessMessage('')
+		setCodeTimer(0)
+	}
+
+	const handleClose = () => {
+		if (!canClose) return
+
+		clearRegistrationVerification()
+		resetModalState()
+		onClose()
+	}
+
+	const validateEmail = (email: string) => {
+		if (!email.trim()) return 'Email обязателен'
+		if (!EMAIL_REGEX.test(email)) return 'Некорректный формат email'
+		return null
+	}
+
+	const validatePassword = (password: string) => {
 		if (!password) return 'Пароль обязателен'
 		if (!PASSWORD_REGEX.test(password)) {
-			return 'Пароль должен содержать: минимум 8 символов, 1 заглавную букву, 1 строчную букву и 1 цифру'
+			return 'Минимум 8 символов, одна заглавная буква, одна строчная буква и одна цифра'
 		}
 		return null
 	}
 
-	const validateMigrationForm = (): boolean => {
-		const errors: Partial<MigrationFormData> = {}
-		if (!emailFormData.email.trim()) errors.email = 'Email обязателен'
-		else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailFormData.email))
-			errors.email = 'Некорректный формат email'
-		const passwordError = validatePassword(emailFormData.password)
+	const validateLoginForm = () => {
+		const errors: Partial<LoginFormData> = {}
+		const emailError = validateEmail(loginData.email)
+
+		if (emailError) errors.email = emailError
+		if (!loginData.password) errors.password = 'Пароль обязателен'
+
+		setLoginErrors(errors)
+		return Object.keys(errors).length === 0
+	}
+
+	const validateForgotPasswordForm = () => {
+		const errors: Partial<ForgotPasswordFormData> = {}
+		const emailError = validateEmail(forgotPasswordData.email)
+
+		if (emailError) errors.email = emailError
+
+		setForgotPasswordErrors(errors)
+		return Object.keys(errors).length === 0
+	}
+
+	const validateResetPasswordForm = () => {
+		const errors: Partial<Record<keyof ResetPasswordFormData, string>> = {}
+		const passwordError = validatePassword(resetPasswordData.password)
+
 		if (passwordError) errors.password = passwordError
-		if (emailFormData.password !== emailFormData.confirmPassword)
+		if (resetPasswordData.password !== resetPasswordData.confirmPassword) {
 			errors.confirmPassword = 'Пароли не совпадают'
-		setFormErrors(errors)
-		return Object.keys(errors).length === 0
-	}
-
-	const validateEmailLogin = (): boolean => {
-		const errors: Partial<Record<keyof typeof emailLoginData, string>> = {}
-		if (!emailLoginData.email.trim()) errors.email = 'Email обязателен'
-		else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLoginData.email))
-			errors.email = 'Некорректный формат email'
-		if (!emailLoginData.password) errors.password = 'Пароль обязателен'
-		setEmailLoginErrors(errors)
-		return Object.keys(errors).length === 0
-	}
-
-	const handleMigrationSubmit = async (e: React.FormEvent) => {
-		e.preventDefault()
-		setGlobalError('')
-		if (!validateMigrationForm()) return
-		const token =
-			telegramAuthToken || localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN)
-		if (!token) {
-			setGlobalError(
-				'Ошибка авторизации. Попробуйте войти через Telegram ещё раз',
-			)
-			return
 		}
+
+		setResetPasswordErrors(errors)
+		return Object.keys(errors).length === 0
+	}
+
+	const validateRegisterForm = () => {
+		const errors: Partial<Record<keyof RegisterFormData, string>> = {}
+		const emailError = validateEmail(registerData.email)
+		const passwordError = validatePassword(registerData.password)
+
+		if (!registerData.firstName.trim()) errors.firstName = 'Имя обязательно'
+		if (!registerData.lastName.trim()) errors.lastName = 'Фамилия обязательна'
+		if (!registerData.role) errors.role = 'Выберите роль'
+		if (emailError) errors.email = emailError
+		if (passwordError) errors.password = passwordError
+		if (registerData.password !== registerData.confirmPassword) {
+			errors.confirmPassword = 'Пароли не совпадают'
+		}
+
+		setRegisterErrors(errors)
+		return Object.keys(errors).length === 0
+	}
+
+	const handleAuthSuccess = async (authData: LoginV2Response) => {
+		await onLogin(authData)
+		clearRegistrationVerification()
+		resetModalState()
+		onClose()
+	}
+
+	const showLoginAfterVerification = (
+		email: string,
+		message = 'Email подтвержден. Войдите с вашим паролем.',
+	) => {
+		clearRegistrationVerification()
+		setAuthMode('login')
+		setAuthStage('form')
+		setLoginData({ ...emptyLoginForm, email })
+		setRegisterData(emptyRegisterForm)
+		setVerificationCode('')
+		setCodeError('')
+		setCodeTimer(0)
+		setSuccessMessage(message)
+	}
+
+	const handleLoginSubmit = async (e: React.FormEvent) => {
+		e.preventDefault()
+		clearMessages()
+
+		if (!validateLoginForm()) return
+
+		setIsSubmitting(true)
+
+		try {
+			const authData = await loginV2({
+				email: loginData.email.trim(),
+				password: loginData.password,
+			})
+			await handleAuthSuccess(authData)
+		} catch (error) {
+			setLoginErrors({
+				password: (error as Error).message || 'Неверный email или пароль',
+			})
+		} finally {
+			setIsSubmitting(false)
+		}
+	}
+
+	const handleRegisterSubmit = async (e: React.FormEvent) => {
+		e.preventDefault()
+		clearMessages()
+
+		if (!validateRegisterForm() || !registerData.role) return
+
+		setIsSubmitting(true)
+
+		try {
+			const email = registerData.email.trim()
+
+			await registerV2({
+				email,
+				password: registerData.password,
+				firstName: registerData.firstName.trim(),
+				lastName: registerData.lastName.trim(),
+				role: registerData.role,
+			})
+			persistRegistrationVerification(email, CODE_TIMER_DURATION)
+			setRegisterData(prev => ({ ...prev, email }))
+			setLoginData(prev => ({ ...prev, email }))
+			setAuthStage('verify')
+			setCodeTimer(CODE_TIMER_DURATION)
+			setSuccessMessage('Код подтверждения отправлен на почту')
+		} catch (error) {
+			setGlobalError((error as Error).message || 'Ошибка регистрации')
+		} finally {
+			setIsSubmitting(false)
+		}
+	}
+
+	const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+		e.preventDefault()
+		clearMessages()
+
+		if (!validateForgotPasswordForm()) return
+
+		const email = forgotPasswordData.email.trim()
 		setIsSubmitting(true)
 		setCodeError('')
-		try {
-			console.log('🚀 [MIGRATION] Отправка attachEmail...')
-			await attachEmail(emailFormData.email, emailFormData.password, token)
-			console.log('✅ [MIGRATION] attachEmail успех. Отправка requestCode...')
 
-			const endTime = Date.now() + CODE_TIMER_DURATION
-			localStorage.setItem(STORAGE_KEYS.MIGRATION_TIMER, endTime.toString())
-			localStorage.setItem(STORAGE_KEYS.MIGRATION_EMAIL, emailFormData.email)
-			setCodeTimer(120)
-			setShowCodeVerification(true)
-			localStorage.setItem(
-				STORAGE_KEYS.MIGRATION_SHOW_CODE_VERIFICATION,
-				'true',
+		try {
+			await requestPasswordReset(email)
+			setForgotPasswordData({ email })
+			setAuthStage('reset-password')
+			setCodeTimer(CODE_TIMER_DURATION)
+			setSuccessMessage(
+				'Если такой email зарегистрирован, код восстановления отправлен на почту',
 			)
-			localStorage.setItem(STORAGE_KEYS.MIGRATION_PENDING, 'true')
-		} catch (error: any) {
-			console.error('❌ [MIGRATION] Ошибка:', error)
-			setGlobalError(error.message || 'Произошла ошибка. Попробуйте ещё раз')
+		} catch (error) {
+			setGlobalError((error as Error).message || 'Не удалось отправить код')
 		} finally {
 			setIsSubmitting(false)
 		}
@@ -303,560 +444,743 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
 	const handleCodeSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
-		if (!verificationCode.trim() || !emailFormData.email) return
-		setIsCodeSubmitting(true)
 		setCodeError('')
-		try {
-			await verifyEmail(emailFormData.email, verificationCode)
-			localStorage.removeItem(STORAGE_KEYS.MIGRATION_TIMER)
-			localStorage.removeItem(STORAGE_KEYS.MIGRATION_EMAIL)
-			localStorage.removeItem(STORAGE_KEYS.MIGRATION_SHOW_CODE_VERIFICATION)
-			localStorage.removeItem(STORAGE_KEYS.MIGRATION_PENDING)
-			localStorage.removeItem(STORAGE_KEYS.MIGRATION_TG_USER)
+		clearMessages()
 
-			// Сначала закрываем модалку, потом вызываем логин
-			onClose()
-			if (selectedRole && telegramUserData && onLogin) {
-				onLogin(selectedRole, telegramUserData)
+		if (verificationCode.length !== 6) {
+			setCodeError('Введите 6 цифр из письма')
+			return
+		}
+
+		setIsSubmitting(true)
+
+		try {
+			await verifyEmail(activeEmail, verificationCode)
+
+			if (!registerData.password) {
+				showLoginAfterVerification(activeEmail)
+				return
 			}
-		} catch (error: any) {
-			console.error('❌ [VERIFY] Ошибка:', error)
-			setCodeError(error.message || 'Неверный код. Попробуйте ещё раз')
+
+			try {
+				const authData = await loginV2({
+					email: activeEmail,
+					password: registerData.password,
+				})
+				await handleAuthSuccess(authData)
+			} catch (error) {
+				showLoginAfterVerification(
+					activeEmail,
+					'Email подтвержден. Войдите с вашим паролем.',
+				)
+				setLoginErrors({
+					password: (error as Error).message || 'Введите пароль для входа',
+				})
+			}
+		} catch (error) {
+			setCodeError((error as Error).message || 'Не удалось подтвердить email')
 		} finally {
-			setIsCodeSubmitting(false)
+			setIsSubmitting(false)
+		}
+	}
+
+	const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+		e.preventDefault()
+		setCodeError('')
+		clearMessages()
+
+		if (verificationCode.length !== 6) {
+			setCodeError('Введите 6 цифр из письма')
+			return
+		}
+
+		if (!validateResetPasswordForm()) return
+
+		setIsSubmitting(true)
+
+		try {
+			await resetPassword(
+				activeEmail,
+				verificationCode,
+				resetPasswordData.password,
+			)
+			clearRegistrationVerification()
+			setAuthMode('login')
+			setAuthStage('form')
+			setLoginData({ ...emptyLoginForm, email: activeEmail })
+			setForgotPasswordData(emptyForgotPasswordForm)
+			setResetPasswordData(emptyResetPasswordForm)
+			setVerificationCode('')
+			setCodeTimer(0)
+			setSuccessMessage('Пароль обновлен. Войдите с новым паролем.')
+		} catch (error) {
+			setCodeError((error as Error).message || 'Не удалось изменить пароль')
+		} finally {
+			setIsSubmitting(false)
 		}
 	}
 
 	const handleResendCode = async () => {
-		if (codeTimer > 0 || !emailFormData.email) return
+		if (codeTimer > 0 || !activeEmail || isSubmitting) return
+
+		setIsSubmitting(true)
+		setCodeError('')
+		clearMessages()
+
 		try {
-			await requestCode(emailFormData.email)
-			const endTime = Date.now() + CODE_TIMER_DURATION
-			localStorage.setItem(STORAGE_KEYS.MIGRATION_TIMER, endTime.toString())
-			setCodeTimer(120)
-			setCodeError('')
-		} catch (error: any) {
-			setCodeError(error.message || 'Не удалось отправить код')
+			if (authMode === 'forgot-password') {
+				await requestPasswordReset(activeEmail)
+			} else {
+				await requestCode(activeEmail)
+				persistRegistrationVerification(activeEmail, CODE_TIMER_DURATION)
+			}
+			setCodeTimer(CODE_TIMER_DURATION)
+			setSuccessMessage('Новый код отправлен на почту')
+		} catch (error) {
+			setCodeError((error as Error).message || 'Не удалось отправить код')
+		} finally {
+			setIsSubmitting(false)
 		}
 	}
 
-	const formatTimer = (seconds: number): string => {
+	const formatTimer = (seconds: number) => {
 		const mins = Math.floor(seconds / 60)
 		const secs = seconds % 60
 		return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 	}
 
-	const handleTelegramAuth = async (user: TelegramUser) => {
-		if (!selectedRole) return
-		setIsSubmitting(true)
-		setGlobalError('')
-		try {
-			const response = await loginWithTelegram(user, selectedRole)
-			if (response.accessToken) {
-				localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.accessToken)
-				setTelegramAuthToken(response.accessToken)
-			}
-			const needsMigration =
-				response.hasEmailAttached === undefined
-					? true
-					: !response.hasEmailAttached
-			if (needsMigration) {
-				setTelegramUserData(user)
-				localStorage.setItem(
-					STORAGE_KEYS.MIGRATION_TG_USER,
-					JSON.stringify(user),
-				)
-				setShowMigrationModal(true)
-				localStorage.setItem(STORAGE_KEYS.MIGRATION_PENDING, 'true')
-				if (user.username)
-					setEmailFormData(prev => ({
-						...prev,
-						email: `${user.username}@telegram.local`,
-					}))
-			} else {
-				if (response.role)
-					localStorage.setItem(STORAGE_KEYS.USER_ROLE, response.role)
-				if (onLogin) onLogin(selectedRole, user)
-				handleClose()
-			}
-		} catch (error: any) {
-			console.error('❌ [TG AUTH] Ошибка:', error)
-			setGlobalError(error.message || 'Ошибка входа через Telegram')
-		} finally {
-			setIsSubmitting(false)
-		}
-	}
+	const switchMode = (mode: AuthMode) => {
+		if (isSubmitting || authMode === mode) return
 
-	const handleEmailLogin = async (e: React.FormEvent) => {
-		e.preventDefault()
-		setGlobalError('')
-		if (!validateEmailLogin()) return
-		setIsSubmitting(true)
-		try {
-			const response = await loginV2({
-				email: emailLoginData.email,
-				password: emailLoginData.password,
-			})
-			if (response.role)
-				localStorage.setItem(STORAGE_KEYS.USER_ROLE, response.role)
-			if (selectedRole && onLogin) {
-				onLogin(selectedRole, {
-					id: response.telegramId,
-					first_name: response.firstName,
-					last_name: response.lastName,
-					username: response.username,
-					photo_url: response.photoUrl,
-					auth_date: response.authDate,
-					hash: '',
-				})
-			}
-			handleClose()
-		} catch (error: any) {
-			console.error('❌ [EMAIL LOGIN] Ошибка:', error)
-			setEmailLoginErrors({
-				password: error.message || 'Неверный email или пароль',
-			})
-		} finally {
-			setIsSubmitting(false)
-		}
-	}
+		if (isRegistrationVerificationPending) return
 
-	const handleBackToRoleSelect = () => {
-		setShowMigrationModal(false)
-		setShowCodeVerification(false)
-		setTelegramUserData(null)
-		setTelegramAuthToken(null)
-		setEmailFormData({ email: '', password: '', confirmPassword: '' })
-		setFormErrors({})
-		setCodeTimer(0)
+		setAuthMode(mode)
+		setAuthStage('form')
+		setLoginErrors({})
+		setRegisterErrors({})
+		setForgotPasswordErrors({})
+		setResetPasswordErrors({})
 		setVerificationCode('')
-		localStorage.removeItem(STORAGE_KEYS.MIGRATION_TIMER)
-		localStorage.removeItem(STORAGE_KEYS.MIGRATION_EMAIL)
-		localStorage.removeItem(STORAGE_KEYS.MIGRATION_SHOW_CODE_VERIFICATION)
-		localStorage.removeItem(STORAGE_KEYS.MIGRATION_PENDING)
-		localStorage.removeItem(STORAGE_KEYS.MIGRATION_TG_USER)
-		setGlobalError('')
+		setCodeError('')
+		clearMessages()
+	}
+
+	const openForgotPassword = () => {
+		if (isSubmitting) return
+
+		setAuthMode('forgot-password')
+		setAuthStage('form')
+		setForgotPasswordData({ email: loginData.email.trim() })
+		setForgotPasswordErrors({})
+		setResetPasswordErrors({})
+		setVerificationCode('')
+		setCodeError('')
+		clearMessages()
+	}
+
+	const backToLogin = () => {
+		if (isSubmitting) return
+
+		setAuthMode('login')
+		setAuthStage('form')
+		setLoginData(prev => ({
+			...prev,
+			email: forgotPasswordData.email || prev.email,
+		}))
+		setForgotPasswordErrors({})
+		setResetPasswordErrors({})
+		setVerificationCode('')
+		setCodeError('')
+		clearMessages()
 	}
 
 	const renderCloseButton = () => {
-		if (showMigrationModal || isClosable === false) return null
+		if (!isClosable) return null
+
 		return (
 			<button
 				type='button'
 				className={styles.closeButton}
 				onClick={handleClose}
 				aria-label='Закрыть'
+				disabled={!canClose}
 			>
 				×
 			</button>
 		)
 	}
 
-	const renderCodeVerification = () => (
-		<div className={styles.modal}>
-			<div className={styles.modalHeader}>
-				<h3 className={styles.modalTitle}>Подтвердите email</h3>
-				{renderCloseButton()}
-			</div>
-			<div className={styles.modalContent}>
-				<p className={styles.description}>
-					Мы отправили код подтверждения на{' '}
-					<strong>{emailFormData.email}</strong>
+	const renderTabs = () => (
+		<div className={styles.authTabs}>
+			<button
+				type='button'
+				className={`${styles.authTab} ${authMode === 'login' ? styles.active : ''}`}
+				onClick={() => switchMode('login')}
+			>
+				Вход
+			</button>
+			<button
+				type='button'
+				className={`${styles.authTab} ${authMode === 'register' ? styles.active : ''}`}
+				onClick={() => switchMode('register')}
+			>
+				Регистрация
+			</button>
+		</div>
+	)
+
+	const renderRoleSelect = () => (
+		<div className={styles.roleOptions}>
+			<button
+				type='button'
+				className={`${styles.roleCard} ${registerData.role === 'tutor' ? styles.selected : ''}`}
+				onClick={() => {
+					setRegisterData(prev => ({ ...prev, role: 'tutor' }))
+					setRegisterErrors(prev => ({ ...prev, role: undefined }))
+					clearMessages()
+				}}
+			>
+				<h4 className={styles.roleTitle}>Репетитор</h4>
+				<p className={styles.roleDescription}>
+					Хочу преподавать и вести учеников
 				</p>
-				<form onSubmit={handleCodeSubmit} className={styles.codeForm}>
-					<div className={styles.formGroup}>
-						<label htmlFor='code' className={styles.formLabel}>
-							Код из письма *
-						</label>
-						<input
-							id='code'
-							type='text'
-							inputMode='numeric'
-							pattern='[0-9]*'
-							maxLength={6}
-							className={`${styles.formInput} ${styles.codeInput} ${codeError ? styles.inputError : ''}`}
-							value={verificationCode}
-							onChange={e => {
-								setVerificationCode(
-									e.target.value.replace(/\D/g, '').slice(0, 6),
-								)
-								if (codeError) setCodeError('')
-							}}
-							placeholder='000000'
-							disabled={isCodeSubmitting || codeTimer <= 0}
-							autoFocus
-						/>
-						{codeError && (
-							<span className={styles.errorMessage}>{codeError}</span>
-						)}
-					</div>
-					<button
-						type='submit'
-						className={styles.submitButton}
-						disabled={isCodeSubmitting || verificationCode.length !== 6}
-					>
-						{isCodeSubmitting ? 'Проверка...' : 'Подтвердить'}
-					</button>
-				</form>
-				<div className={styles.timerSection}>
-					{codeTimer > 0 ? (
-						<p className={styles.timerText}>
-							Повторная отправка через{' '}
-							<span className={styles.timerValue}>
-								{formatTimer(codeTimer)}
-							</span>
-						</p>
-					) : (
-						<button
-							type='button'
-							className={styles.resendButton}
-							onClick={handleResendCode}
-							disabled={isSubmitting}
-						>
-							Отправить код ещё раз
-						</button>
+			</button>
+			<button
+				type='button'
+				className={`${styles.roleCard} ${registerData.role === 'student_or_parent' ? styles.selected : ''}`}
+				onClick={() => {
+					setRegisterData(prev => ({ ...prev, role: 'student_or_parent' }))
+					setRegisterErrors(prev => ({ ...prev, role: undefined }))
+					clearMessages()
+				}}
+			>
+				<h4 className={styles.roleTitle}>Ученик или родитель</h4>
+				<p className={styles.roleDescription}>Хочу найти репетитора</p>
+			</button>
+			{registerErrors.role && (
+				<span className={styles.errorMessage}>{registerErrors.role}</span>
+			)}
+		</div>
+	)
+
+	const renderLoginForm = () => (
+		<form
+			onSubmit={handleLoginSubmit}
+			className={styles.migrationForm}
+			noValidate
+		>
+			<div className={styles.formGroup}>
+				<label htmlFor='login-email' className={styles.formLabel}>
+					Email
+				</label>
+				<input
+					id='login-email'
+					type='email'
+					className={`${styles.formInput} ${loginErrors.email ? styles.inputError : ''}`}
+					value={loginData.email}
+					onChange={e => {
+						setLoginData(prev => ({ ...prev, email: e.target.value }))
+						setLoginErrors(prev => ({ ...prev, email: undefined }))
+						clearMessages()
+					}}
+					placeholder='name@example.com'
+					autoComplete='email'
+					disabled={isSubmitting}
+				/>
+				{loginErrors.email && (
+					<span className={styles.errorMessage}>{loginErrors.email}</span>
+				)}
+			</div>
+			<div className={styles.formGroup}>
+				<label htmlFor='login-password' className={styles.formLabel}>
+					Пароль
+				</label>
+				<input
+					id='login-password'
+					type='password'
+					className={`${styles.formInput} ${loginErrors.password ? styles.inputError : ''}`}
+					value={loginData.password}
+					onChange={e => {
+						setLoginData(prev => ({ ...prev, password: e.target.value }))
+						setLoginErrors(prev => ({ ...prev, password: undefined }))
+						clearMessages()
+					}}
+					placeholder='Введите пароль'
+					autoComplete='current-password'
+					disabled={isSubmitting}
+				/>
+				{loginErrors.password && (
+					<span className={styles.errorMessage}>{loginErrors.password}</span>
+				)}
+			</div>
+			<button
+				type='submit'
+				className={styles.submitButton}
+				disabled={isSubmitting}
+			>
+				{submitButtonText}
+			</button>
+			<button
+				type='button'
+				className={styles.textButton}
+				onClick={openForgotPassword}
+				disabled={isSubmitting}
+			>
+				Забыли пароль?
+			</button>
+		</form>
+	)
+
+	const renderForgotPasswordForm = () => (
+		<form
+			onSubmit={handleForgotPasswordSubmit}
+			className={styles.migrationForm}
+			noValidate
+		>
+			<p className={styles.description}>
+				Укажите email аккаунта, и мы отправим код для восстановления пароля.
+			</p>
+			<div className={styles.formGroup}>
+				<label htmlFor='forgot-email' className={styles.formLabel}>
+					Email
+				</label>
+				<input
+					id='forgot-email'
+					type='email'
+					className={`${styles.formInput} ${forgotPasswordErrors.email ? styles.inputError : ''}`}
+					value={forgotPasswordData.email}
+					onChange={e => {
+						setForgotPasswordData({ email: e.target.value })
+						setForgotPasswordErrors({})
+						clearMessages()
+					}}
+					placeholder='name@example.com'
+					autoComplete='email'
+					disabled={isSubmitting}
+				/>
+				{forgotPasswordErrors.email && (
+					<span className={styles.errorMessage}>
+						{forgotPasswordErrors.email}
+					</span>
+				)}
+			</div>
+			<button
+				type='submit'
+				className={styles.submitButton}
+				disabled={isSubmitting}
+			>
+				{isSubmitting ? 'Отправляем...' : 'Получить код'}
+			</button>
+			<button
+				type='button'
+				className={styles.backButton}
+				onClick={backToLogin}
+				disabled={isSubmitting}
+			>
+				Вернуться ко входу
+			</button>
+		</form>
+	)
+
+	const renderRegisterForm = () => (
+		<form
+			onSubmit={handleRegisterSubmit}
+			className={styles.migrationForm}
+			noValidate
+		>
+			{renderRoleSelect()}
+			<div className={styles.nameGrid}>
+				<div className={styles.formGroup}>
+					<label htmlFor='register-first-name' className={styles.formLabel}>
+						Имя
+					</label>
+					<input
+						id='register-first-name'
+						type='text'
+						className={`${styles.formInput} ${registerErrors.firstName ? styles.inputError : ''}`}
+						value={registerData.firstName}
+						onChange={e => {
+							setRegisterData(prev => ({
+								...prev,
+								firstName: e.target.value,
+							}))
+							setRegisterErrors(prev => ({ ...prev, firstName: undefined }))
+							clearMessages()
+						}}
+						placeholder='Иван'
+						autoComplete='given-name'
+						disabled={isSubmitting}
+					/>
+					{registerErrors.firstName && (
+						<span className={styles.errorMessage}>
+							{registerErrors.firstName}
+						</span>
 					)}
 				</div>
-				<button
-					type='button'
-					className={styles.backButton}
-					onClick={handleBackToRoleSelect}
-				>
-					← Изменить email
-				</button>
+				<div className={styles.formGroup}>
+					<label htmlFor='register-last-name' className={styles.formLabel}>
+						Фамилия
+					</label>
+					<input
+						id='register-last-name'
+						type='text'
+						className={`${styles.formInput} ${registerErrors.lastName ? styles.inputError : ''}`}
+						value={registerData.lastName}
+						onChange={e => {
+							setRegisterData(prev => ({
+								...prev,
+								lastName: e.target.value,
+							}))
+							setRegisterErrors(prev => ({ ...prev, lastName: undefined }))
+							clearMessages()
+						}}
+						placeholder='Иванов'
+						autoComplete='family-name'
+						disabled={isSubmitting}
+					/>
+					{registerErrors.lastName && (
+						<span className={styles.errorMessage}>
+							{registerErrors.lastName}
+						</span>
+					)}
+				</div>
 			</div>
-		</div>
-	)
-
-	const renderMigrationForm = () => (
-		<div className={styles.modal}>
-			<div className={styles.modalHeader}>
-				<h3 className={styles.modalTitle}>Завершите регистрацию</h3>
-				{renderCloseButton()}
-			</div>
-			<div className={styles.modalContent}>
-				<p className={styles.description}>
-					Так как телеграмм на территории Российской федерации испытывает
-					трудности для продолжения работы укажите email и создайте пароль. Это
-					нужно для миграции вашего аккаунта.
-				</p>
-				{telegramUserData && (
-					<div className={styles.userInfo}>
-						<div className={styles.userInfoAvatar}>
-							{telegramUserData.photo_url ? (
-								<img src={telegramUserData.photo_url} alt='Avatar' />
-							) : (
-								<span>
-									{telegramUserData.first_name?.[0]?.toUpperCase() || '👤'}
-								</span>
-							)}
-						</div>
-						<div className={styles.userInfoText}>
-							<strong>
-								{telegramUserData.first_name} {telegramUserData.last_name}
-							</strong>
-							{telegramUserData.username && (
-								<span>@{telegramUserData.username}</span>
-							)}
-						</div>
-					</div>
+			<div className={styles.formGroup}>
+				<label htmlFor='register-email' className={styles.formLabel}>
+					Email
+				</label>
+				<input
+					id='register-email'
+					type='email'
+					className={`${styles.formInput} ${registerErrors.email ? styles.inputError : ''}`}
+					value={registerData.email}
+					onChange={e => {
+						setRegisterData(prev => ({ ...prev, email: e.target.value }))
+						setRegisterErrors(prev => ({ ...prev, email: undefined }))
+						clearMessages()
+					}}
+					placeholder='name@example.com'
+					autoComplete='email'
+					disabled={isSubmitting}
+				/>
+				{registerErrors.email && (
+					<span className={styles.errorMessage}>{registerErrors.email}</span>
 				)}
-				{globalError && <div className={styles.globalError}>{globalError}</div>}
-				<form onSubmit={handleMigrationSubmit} className={styles.migrationForm}>
-					<div className={styles.formGroup}>
-						<label htmlFor='email' className={styles.formLabel}>
-							Email *
-						</label>
-						<input
-							id='email'
-							type='email'
-							className={`${styles.formInput} ${formErrors.email ? styles.inputError : ''}`}
-							value={emailFormData.email}
-							onChange={e => {
-								setEmailFormData(prev => ({ ...prev, email: e.target.value }))
-								if (formErrors.email)
-									setFormErrors(prev => ({ ...prev, email: undefined }))
-								if (globalError) setGlobalError('')
-							}}
-							placeholder='your@email.com'
-							disabled={isSubmitting || showCodeVerification}
-						/>
-						{formErrors.email && (
-							<span className={styles.errorMessage}>{formErrors.email}</span>
-						)}
-					</div>
-					<div className={styles.formGroup}>
-						<label htmlFor='password' className={styles.formLabel}>
-							Пароль *
-						</label>
-						<input
-							id='password'
-							type='password'
-							className={`${styles.formInput} ${formErrors.password ? styles.inputError : ''}`}
-							value={emailFormData.password}
-							onChange={e => {
-								setEmailFormData(prev => ({
-									...prev,
-									password: e.target.value,
-								}))
-								if (formErrors.password)
-									setFormErrors(prev => ({ ...prev, password: undefined }))
-								if (globalError) setGlobalError('')
-							}}
-							placeholder='Мин. 8 симв., 1 заглавная, 1 строчная, 1 цифра'
-							disabled={isSubmitting || showCodeVerification}
-						/>
-						{formErrors.password && (
-							<span className={styles.errorMessage}>{formErrors.password}</span>
-						)}
-						<p className={styles.passwordHint}>
-							Пароль должен содержать: минимум 8 символов, 1 заглавную букву, 1
-							строчную букву и 1 цифру
-						</p>
-					</div>
-					<div className={styles.formGroup}>
-						<label htmlFor='confirmPassword' className={styles.formLabel}>
-							Подтвердите пароль *
-						</label>
-						<input
-							id='confirmPassword'
-							type='password'
-							className={`${styles.formInput} ${formErrors.confirmPassword ? styles.inputError : ''}`}
-							value={emailFormData.confirmPassword}
-							onChange={e => {
-								setEmailFormData(prev => ({
-									...prev,
-									confirmPassword: e.target.value,
-								}))
-								if (formErrors.confirmPassword)
-									setFormErrors(prev => ({
-										...prev,
-										confirmPassword: undefined,
-									}))
-							}}
-							placeholder='Повторите пароль'
-							disabled={isSubmitting || showCodeVerification}
-						/>
-						{formErrors.confirmPassword && (
-							<span className={styles.errorMessage}>
-								{formErrors.confirmPassword}
-							</span>
-						)}
-					</div>
-					<button
-						type='submit'
-						className={styles.submitButton}
-						disabled={isSubmitting || showCodeVerification}
-					>
-						{isSubmitting ? (
-							<span className={styles.loadingSpinner}>Загрузка...</span>
-						) : (
-							'Продолжить'
-						)}
-					</button>
-				</form>
-				<p className={styles.privacyText}>
-					Нажимая «Продолжить», вы соглашаетесь с обработкой персональных данных
+			</div>
+			<div className={styles.formGroup}>
+				<label htmlFor='register-password' className={styles.formLabel}>
+					Пароль
+				</label>
+				<input
+					id='register-password'
+					type='password'
+					className={`${styles.formInput} ${registerErrors.password ? styles.inputError : ''}`}
+					value={registerData.password}
+					onChange={e => {
+						setRegisterData(prev => ({ ...prev, password: e.target.value }))
+						setRegisterErrors(prev => ({ ...prev, password: undefined }))
+						clearMessages()
+					}}
+					placeholder='Введите пароль'
+					autoComplete='new-password'
+					disabled={isSubmitting}
+				/>
+				{registerErrors.password && (
+					<span className={styles.errorMessage}>{registerErrors.password}</span>
+				)}
+				<p className={styles.passwordHint}>
+					Минимум 8 символов, одна заглавная буква, одна строчная буква и одна
+					цифра.
 				</p>
 			</div>
-		</div>
+			<div className={styles.formGroup}>
+				<label htmlFor='register-confirm-password' className={styles.formLabel}>
+					Повторите пароль
+				</label>
+				<input
+					id='register-confirm-password'
+					type='password'
+					className={`${styles.formInput} ${registerErrors.confirmPassword ? styles.inputError : ''}`}
+					value={registerData.confirmPassword}
+					onChange={e => {
+						setRegisterData(prev => ({
+							...prev,
+							confirmPassword: e.target.value,
+						}))
+						setRegisterErrors(prev => ({
+							...prev,
+							confirmPassword: undefined,
+						}))
+						clearMessages()
+					}}
+					placeholder='Повторите пароль'
+					autoComplete='new-password'
+					disabled={isSubmitting}
+				/>
+				{registerErrors.confirmPassword && (
+					<span className={styles.errorMessage}>
+						{registerErrors.confirmPassword}
+					</span>
+				)}
+			</div>
+			<button
+				type='submit'
+				className={styles.submitButton}
+				disabled={isSubmitting}
+			>
+				{submitButtonText}
+			</button>
+		</form>
 	)
 
-	const renderAuthMethodSelect = () => (
-		<div className={styles.modal}>
-			<div className={styles.modalHeader}>
-				<h3 className={styles.modalTitle}>
-					{loginMethod === 'telegram' ? 'Выберите роль' : 'Вход по email'}
-				</h3>
-				{renderCloseButton()}
+	const renderPasswordResetForm = () => (
+		<form
+			onSubmit={handleResetPasswordSubmit}
+			className={styles.codeForm}
+			noValidate
+		>
+			<p className={styles.description}>
+				Введите код из письма для <strong>{activeEmail}</strong> и задайте новый
+				пароль.
+			</p>
+			<div className={styles.formGroup}>
+				<label htmlFor='password-reset-code' className={styles.formLabel}>
+					Код из письма
+				</label>
+				<input
+					id='password-reset-code'
+					type='text'
+					inputMode='numeric'
+					pattern='[0-9]*'
+					maxLength={6}
+					className={`${styles.formInput} ${styles.codeInput} ${codeError ? styles.inputError : ''}`}
+					value={verificationCode}
+					onChange={e => {
+						setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))
+						setCodeError('')
+						clearMessages()
+					}}
+					placeholder='000000'
+					autoComplete='one-time-code'
+					disabled={isSubmitting}
+					autoFocus
+				/>
+				{codeError && <span className={styles.errorMessage}>{codeError}</span>}
 			</div>
-			<div className={styles.modalContent}>
-				{globalError && <div className={styles.globalError}>{globalError}</div>}
-				{selectedRole && (
-					<div className={styles.loginMethodToggle}>
-						<button
-							type='button'
-							className={`${styles.methodBtn} ${loginMethod === 'telegram' ? styles.active : ''}`}
-							onClick={() => {
-								setLoginMethod('telegram')
-								setGlobalError('')
-							}}
-						>
-							Telegram
-						</button>
-						<button
-							type='button'
-							className={`${styles.methodBtn} ${loginMethod === 'email' ? styles.active : ''}`}
-							onClick={() => {
-								setLoginMethod('email')
-								setGlobalError('')
-							}}
-						>
-							Email
-						</button>
-					</div>
+			<div className={styles.formGroup}>
+				<label htmlFor='reset-password' className={styles.formLabel}>
+					Новый пароль
+				</label>
+				<input
+					id='reset-password'
+					type='password'
+					className={`${styles.formInput} ${resetPasswordErrors.password ? styles.inputError : ''}`}
+					value={resetPasswordData.password}
+					onChange={e => {
+						setResetPasswordData(prev => ({
+							...prev,
+							password: e.target.value,
+						}))
+						setResetPasswordErrors(prev => ({ ...prev, password: undefined }))
+						clearMessages()
+					}}
+					placeholder='Введите новый пароль'
+					autoComplete='new-password'
+					disabled={isSubmitting}
+				/>
+				{resetPasswordErrors.password && (
+					<span className={styles.errorMessage}>
+						{resetPasswordErrors.password}
+					</span>
 				)}
-				{loginMethod === 'telegram' ? (
-					<>
-						<p className={styles.description}>
-							Выберите, как вы хотите использовать платформу:
-						</p>
-						<div className={styles.roleOptions}>
-							<div
-								className={`${styles.roleCard} ${selectedRole === 'tutor' ? styles.selected : ''}`}
-								onClick={() => handleRoleSelect('tutor')}
-								role='button'
-								tabIndex={0}
-								onKeyDown={e => e.key === 'Enter' && handleRoleSelect('tutor')}
-							>
-								<span className={styles.roleIcon}>👨‍🏫</span>
-								<h4 className={styles.roleTitle}>Репетитор</h4>
-								<p className={styles.roleDescription}>
-									Я хочу преподавать и находить учеников
-								</p>
-								{selectedRole === 'tutor' && (
-									<div className={styles.checkmark}>✓</div>
-								)}
-							</div>
-							<div
-								className={`${styles.roleCard} ${selectedRole === 'student_or_parent' ? styles.selected : ''}`}
-								onClick={() => handleRoleSelect('student_or_parent')}
-								role='button'
-								tabIndex={0}
-								onKeyDown={e =>
-									e.key === 'Enter' && handleRoleSelect('student_or_parent')
-								}
-							>
-								<span className={styles.roleIcon}>🎓</span>
-								<h4 className={styles.roleTitle}>Ищу репетитора</h4>
-								<p className={styles.roleDescription}>
-									Я хочу найти репетитора для обучения
-								</p>
-								{selectedRole === 'student_or_parent' && (
-									<div className={styles.checkmark}>✓</div>
-								)}
-							</div>
-						</div>
-						{selectedRole && (
-							<>
-								<div className={styles.telegramButtonWrapper}>
-									<TelegramLoginButton
-										botName='ugolrep_bot'
-										buttonSize='large'
-										requestAccess={true}
-										usePic={true}
-										dataOnauth={handleTelegramAuth}
-										lang='ru'
-									/>
-								</div>
-								<p className={styles.privacyText}>
-									Выполняя вход на сайте, вы соглашаетесь с обработкой
-									персональных данных.
-								</p>
-							</>
-						)}
-					</>
+				<p className={styles.passwordHint}>
+					Минимум 8 символов, одна заглавная буква, одна строчная буква и одна
+					цифра.
+				</p>
+			</div>
+			<div className={styles.formGroup}>
+				<label htmlFor='reset-confirm-password' className={styles.formLabel}>
+					Повторите пароль
+				</label>
+				<input
+					id='reset-confirm-password'
+					type='password'
+					className={`${styles.formInput} ${resetPasswordErrors.confirmPassword ? styles.inputError : ''}`}
+					value={resetPasswordData.confirmPassword}
+					onChange={e => {
+						setResetPasswordData(prev => ({
+							...prev,
+							confirmPassword: e.target.value,
+						}))
+						setResetPasswordErrors(prev => ({
+							...prev,
+							confirmPassword: undefined,
+						}))
+						clearMessages()
+					}}
+					placeholder='Повторите новый пароль'
+					autoComplete='new-password'
+					disabled={isSubmitting}
+				/>
+				{resetPasswordErrors.confirmPassword && (
+					<span className={styles.errorMessage}>
+						{resetPasswordErrors.confirmPassword}
+					</span>
+				)}
+			</div>
+			<button
+				type='submit'
+				className={styles.submitButton}
+				disabled={isSubmitting || verificationCode.length !== 6}
+			>
+				{isSubmitting ? 'Сохраняем...' : 'Сохранить пароль'}
+			</button>
+			<div className={styles.timerSection}>
+				{codeTimer > 0 ? (
+					<p className={styles.timerText}>
+						Повторная отправка через{' '}
+						<span className={styles.timerValue}>{formatTimer(codeTimer)}</span>
+					</p>
 				) : (
-					<>
-						<p className={styles.description}>
-							Войдите с помощью email и пароля
-						</p>
-						<form
-							onSubmit={handleEmailLogin}
-							className={styles.migrationForm}
-							noValidate
-						>
-							<div className={styles.formGroup}>
-								<label htmlFor='login-email' className={styles.formLabel}>
-									Email
-								</label>
-								<input
-									id='login-email'
-									type='email'
-									className={`${styles.formInput} ${emailLoginErrors.email ? styles.inputError : ''}`}
-									value={emailLoginData.email}
-									onChange={e => {
-										setEmailLoginData(prev => ({
-											...prev,
-											email: e.target.value,
-										}))
-										if (emailLoginErrors.email)
-											setEmailLoginErrors(prev => ({
-												...prev,
-												email: undefined,
-											}))
-										if (globalError) setGlobalError('')
-									}}
-									placeholder='your@email.com'
-									disabled={isSubmitting}
-								/>
-								{emailLoginErrors.email && (
-									<span className={styles.errorMessage}>
-										{emailLoginErrors.email}
-									</span>
-								)}
-							</div>
-							<div className={styles.formGroup}>
-								<label htmlFor='login-password' className={styles.formLabel}>
-									Пароль
-								</label>
-								<input
-									id='login-password'
-									type='password'
-									className={`${styles.formInput} ${emailLoginErrors.password ? styles.inputError : ''}`}
-									value={emailLoginData.password}
-									onChange={e => {
-										setEmailLoginData(prev => ({
-											...prev,
-											password: e.target.value,
-										}))
-										if (emailLoginErrors.password)
-											setEmailLoginErrors(prev => ({
-												...prev,
-												password: undefined,
-											}))
-										if (globalError) setGlobalError('')
-									}}
-									placeholder='••••••••'
-									disabled={isSubmitting}
-								/>
-								{emailLoginErrors.password && (
-									<span className={styles.errorMessage}>
-										{emailLoginErrors.password}
-									</span>
-								)}
-							</div>
-							<button
-								type='submit'
-								className={styles.submitButton}
-								disabled={isSubmitting}
-							>
-								{isSubmitting ? 'Вход...' : 'Войти'}
-							</button>
-						</form>
-					</>
+					<button
+						type='button'
+						className={styles.resendButton}
+						onClick={handleResendCode}
+						disabled={isSubmitting}
+					>
+						Отправить код еще раз
+					</button>
 				)}
 			</div>
-		</div>
+			<button
+				type='button'
+				className={styles.backButton}
+				onClick={backToLogin}
+				disabled={isSubmitting}
+			>
+				Вернуться ко входу
+			</button>
+		</form>
+	)
+
+	const renderCodeVerification = () => (
+		<form onSubmit={handleCodeSubmit} className={styles.codeForm} noValidate>
+			<p className={styles.description}>
+				Код подтверждения отправлен на <strong>{activeEmail}</strong>
+			</p>
+			<div className={styles.formGroup}>
+				<label htmlFor='verification-code' className={styles.formLabel}>
+					Код из письма
+				</label>
+				<input
+					id='verification-code'
+					type='text'
+					inputMode='numeric'
+					pattern='[0-9]*'
+					maxLength={6}
+					className={`${styles.formInput} ${styles.codeInput} ${codeError ? styles.inputError : ''}`}
+					value={verificationCode}
+					onChange={e => {
+						setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))
+						setCodeError('')
+						clearMessages()
+					}}
+					placeholder='000000'
+					autoComplete='one-time-code'
+					disabled={isSubmitting}
+					autoFocus
+				/>
+				{codeError && <span className={styles.errorMessage}>{codeError}</span>}
+			</div>
+			<button
+				type='submit'
+				className={styles.submitButton}
+				disabled={isSubmitting || verificationCode.length !== 6}
+			>
+				{isSubmitting ? 'Проверяем...' : 'Подтвердить'}
+			</button>
+			<div className={styles.timerSection}>
+				{codeTimer > 0 ? (
+					<p className={styles.timerText}>
+						Повторная отправка через{' '}
+						<span className={styles.timerValue}>{formatTimer(codeTimer)}</span>
+					</p>
+				) : (
+					<button
+						type='button'
+						className={styles.resendButton}
+						onClick={handleResendCode}
+						disabled={isSubmitting}
+					>
+						Отправить код еще раз
+					</button>
+				)}
+			</div>
+			<button
+				type='button'
+				className={styles.backButton}
+				onClick={() => {
+					clearRegistrationVerification()
+					setAuthStage('form')
+					setAuthMode('register')
+					setVerificationCode('')
+					setCodeError('')
+					setCodeTimer(0)
+					clearMessages()
+				}}
+				disabled={isSubmitting}
+			>
+				Изменить данные
+			</button>
+		</form>
 	)
 
 	return (
 		<>
 			<div
 				className={styles.overlay}
-				onClick={
-					showMigrationModal || isClosable === false ? undefined : handleClose
-				}
-				style={{
-					cursor:
-						showMigrationModal || isClosable === false ? 'default' : 'pointer',
-				}}
+				onClick={canClose ? handleClose : undefined}
+				style={{ cursor: canClose ? 'pointer' : 'default' }}
 			/>
-			{showMigrationModal &&
-				(showCodeVerification
-					? renderCodeVerification()
-					: renderMigrationForm())}
-			{!showMigrationModal && renderAuthMethodSelect()}
+			<div className={styles.modal}>
+				<div className={styles.modalHeader}>
+					<h3 className={styles.modalTitle}>
+						{authStage === 'verify'
+							? 'Подтвердите email'
+							: authMode === 'login'
+								? 'Вход'
+								: authMode === 'register'
+									? 'Регистрация'
+									: 'Восстановление пароля'}
+					</h3>
+					{renderCloseButton()}
+				</div>
+				<div className={styles.modalContent}>
+					{authStage === 'form' &&
+						authMode !== 'forgot-password' &&
+						renderTabs()}
+					{globalError && (
+						<div className={styles.globalError}>{globalError}</div>
+					)}
+					{successMessage && (
+						<div className={styles.successMessage}>{successMessage}</div>
+					)}
+					{authStage === 'verify'
+						? renderCodeVerification()
+						: authMode === 'forgot-password'
+							? authStage === 'reset-password'
+								? renderPasswordResetForm()
+								: renderForgotPasswordForm()
+							: authMode === 'login'
+								? renderLoginForm()
+								: renderRegisterForm()}
+					{authStage === 'form' && authMode !== 'forgot-password' && (
+						<p className={styles.privacyText}>
+							Нажимая кнопку, вы соглашаетесь с обработкой персональных данных.
+						</p>
+					)}
+				</div>
+			</div>
 		</>
 	)
 }

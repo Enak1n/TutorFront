@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: var(--overlay);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -13,13 +13,13 @@
 }
 
 .modalContent {
-  background-color: #fff;
+  background-color: var(--surface);
   position: relative;
   padding: 30px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   width: 90%;
   max-width: 550px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-md);
   animation: fadeIn 0.3s ease-out;
   max-height: 95vh;
   overflow-y: auto;
@@ -29,8 +29,8 @@
   font-size: 1.6rem;
   font-weight: 700;
   margin-bottom: 20px;
-  color: #1a1a1a;
-  border-bottom: 2px solid #f0f0f0;
+  color: var(--text);
+  border-bottom: 2px solid var(--border);
   padding-bottom: 10px;
 }
 
@@ -42,7 +42,7 @@
   border: none;
   font-size: 24px;
   font-weight: 300;
-  color: #555;
+  color: var(--text-muted);
   cursor: pointer;
   line-height: 1;
   padding: 0;
@@ -50,7 +50,7 @@
   z-index: 10;
 
   &:hover {
-    color: #c53030;
+    color: var(--danger);
   }
 }
 
@@ -60,9 +60,9 @@
   gap: 12px;
   margin-bottom: 25px;
   padding: 15px;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  background-color: #f7f7f7;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-2);
 }
 
 .detailRow {
@@ -70,7 +70,7 @@
   justify-content: space-between;
   align-items: flex-start;
   padding-bottom: 5px;
-  border-bottom: 1px dotted #e0e0e0;
+  border-bottom: 1px dotted var(--border);
 }
 
 .detailRow:last-child {
@@ -81,24 +81,24 @@
 .detailNote {
   margin-top: 10px;
   padding: 10px 0;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--border);
 }
 
 .noteText {
   margin: 5px 0 0 0;
   padding: 10px;
-  background-color: #fff9e6;
-  border-left: 4px solid #ffcc00;
-  border-radius: 4px;
+  background-color: var(--warning-soft);
+  border-left: 4px solid var(--warning);
+  border-radius: var(--radius-xs);
   font-style: italic;
   white-space: pre-wrap;
   word-break: break-word;
-  color: #444;
+  color: var(--text);
 }
 
 .detailLabel {
   font-weight: 600;
-  color: #555;
+  color: var(--text-muted);
   flex-basis: 35%;
   flex-shrink: 0;
   font-size: 0.95rem;
@@ -106,7 +106,7 @@
 
 .detailValue {
   font-weight: 500;
-  color: #1a1a1a;
+  color: var(--text);
   flex-basis: 65%;
   text-align: right;
   word-break: break-word;
@@ -115,12 +115,12 @@
 
 
 .statusGreen {
-  color: #1e7e34;
+  color: var(--success-hover);
   font-weight: 700;
 }
 
 .statusYellow {
-  color: #ffa000;
+  color: var(--warning);
   font-weight: 700;
 }
 
@@ -133,17 +133,17 @@
 }
 
 .completeButton {
-  background-color: #4CAF50;
-  color: white;
+  background-color: var(--success);
+  color: var(--text-on-accent);
   border: none;
   padding: 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background-color 0.2s;
   font-weight: 600;
 
   &:hover:not(:disabled) {
-    background-color: #45a049;
+    background-color: var(--success);
   }
   &:disabled {
     opacity: 0.6;
@@ -152,17 +152,17 @@
 }
 
 .reopenButton {
-  background-color: #ff9800;
-  color: white;
+  background-color: var(--warning);
+  color: var(--text-on-accent);
   border: none;
   padding: 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background-color 0.2s;
   font-weight: 600;
 
   &:hover:not(:disabled) {
-    background-color: #e68900;
+    background-color: var(--warning);
   }
   &:disabled {
     opacity: 0.6;
@@ -172,7 +172,7 @@
 
 .actions button {
   padding: 10px 15px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 600;
   transition: all 0.2s ease-in-out;
@@ -182,40 +182,40 @@
 }
 
 .acceptButton {
-  background-color: #007bff;
-  color: white;
+  background-color: var(--accent);
+  color: var(--text-on-accent);
 }
 
 .acceptButton:hover:not(:disabled) {
-  background-color: #0056b3;
+  background-color: var(--accent-hover);
 }
 
 .rejectButton {
-  background-color: #ffe082;
-  color: #856404;
+  background-color: var(--warning);
+  color: var(--warning-hover);
 }
 
 .rejectButton:hover:not(:disabled) {
-  background-color: #e1c571
+  background-color: var(--warning)
 }
 
 .deleteButton {
-  background-color: #dc3545;
-  color: white;
+  background-color: var(--danger);
+  color: var(--text-on-accent);
 }
 
 .deleteButton:hover:not(:disabled) {
-  background-color: #bd2130;
+  background-color: var(--danger);
 }
 
 .cancelButton {
-  background-color: #f0f0f0;
-  color: #6c757d;
+  background-color: var(--surface-2);
+  color: var(--text-muted);
   flex-grow: 0;
 }
 
 .cancelButton:hover:not(:disabled) {
-  background-color: #e2e6ea;
+  background-color: var(--surface-3);
 }
 
 .actions button:disabled {
@@ -229,14 +229,14 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: color-mix(in srgb, var(--surface) 80%, transparent);
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 1.2rem;
   font-weight: 600;
-  color: #007bff;
-  border-radius: 12px;
+  color: var(--accent);
+  border-radius: var(--radius-md);
   z-index: 1;
 }
 

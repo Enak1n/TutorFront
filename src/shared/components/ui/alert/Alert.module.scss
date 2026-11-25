@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--overlay);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -13,12 +13,12 @@
 }
 
 .alertContent {
-  background-color: #fff;
+  background-color: var(--surface);
   padding: 30px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   width: 90%;
   max-width: 400px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-md);
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -35,7 +35,7 @@
   align-items: center;
   gap: 15px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border);
 }
 
 .alertIcon {
@@ -52,7 +52,7 @@
 
 .alertMessage {
   font-size: 16px;
-  color: #555;
+  color: var(--text-muted);
   white-space: pre-wrap;
   margin: 0;
 }
@@ -64,14 +64,14 @@
   margin-top: 10px;
 }
 
-.type-success .alertIcon { color: #28a745; }
-.type-error .alertIcon { color: #dc3545; }
-.type-warning .alertIcon { color: #ffc107; }
-.type-info .alertIcon { color: #007bff; }
+.type-success .alertIcon { color: var(--success); }
+.type-error .alertIcon { color: var(--danger); }
+.type-warning .alertIcon { color: var(--warning); }
+.type-info .alertIcon { color: var(--accent); }
 
 .button {
   padding: 10px 18px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s, opacity 0.2s;
@@ -79,30 +79,30 @@
 }
 
 .primaryButton {
-  background-color: #007bff;
-  color: white;
+  background-color: var(--accent);
+  color: var(--text-on-accent);
 }
 
 .primaryButton:hover {
-  background-color: #0056b3;
+  background-color: var(--accent-hover);
 }
 
 .secondaryButton {
-  background-color: #f8f9fa;
-  color: #333;
-  border-color: #ddd;
+  background-color: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border);
 }
 
 .secondaryButton:hover {
-  background-color: #e2e6ea;
+  background-color: var(--surface-3);
 }
 
 .singleButton {
-  background-color: #007bff;
-  color: white;
+  background-color: var(--accent);
+  color: var(--text-on-accent);
   min-width: 80px;
 }
 
 .singleButton:hover {
-  background-color: #0056b3;
+  background-color: var(--accent-hover);
 }

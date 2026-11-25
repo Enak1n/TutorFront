@@ -1,86 +1,74 @@
 import { apiClient } from './apiClient'
 
+/**
+ * Окно доступности репетитора. Время — московское (HH:mm[:ss]).
+ * Для репетитора — его окна целиком, для ученика — только свободные части окон.
+ */
 export interface AvailabilitySlot {
 	id: string
-	tutorId: string
 	date: string // YYYY-MM-DD
-	startTime: string // HH:mm
-	endTime: string // HH:mm
-	isAvailable: boolean
-	createdAt: string
-}
-
-export interface Lesson {
-	id: string
+	startTime: string
+	endTime: string
 	tutorId: string
-	user: Student
-	lessonType?: string
-	lessonCategory?: string
-	dateOfCreation: string
-	isAccepted: boolean
-	isRepeated: boolean
-	isCompleted: boolean
-	startLessonDate: string
-	endLessonDate: string
-	note?: string
-}
-
-export interface Student {
-	id: string
-	firstName: string
-	lastName: string | null
-	username?: string
+	tutorName: string
+	isOwn: boolean
 }
 
 export interface DayLessonCount {
 	date: string
 	count: number
-	tutorId?: string
 }
 
-export const getTutorAvailability = async (
-	month: string,
-): Promise<AvailabilitySlot[]> => {
-	const response = await apiClient.get('lesson/availability', {
-		params: { month },
-	})
-	return response.data.items || response.data.availableSlots || []
+export interface BookableStudent {
+	id: string
+	firstName: string | null
+	lastName: string | null
+	isSelf: boolean
 }
 
-export const updateAvailability = async (
-	slotData: Omit<AvailabilitySlot, 'id' | 'createdAt' | 'tutorId'> & {
-		date: string
-		tutorId?: string
-	},
-): Promise<AvailabilitySlot> => {
-	const response = await apiClient.post('lesson/availability', slotData)
-	return response.data
+export interface BookSlotPayload {
+	availabilityId: string
+	startTime: string // HH:mm, МСК
+	durationMinutes: number
+	lessonType: string // русское название предмета
+	lessonCategory: string // русское название категории
+	studentId?: string
+	note?: string
 }
 
-export const deleteAvailability = async (slotId: string): Promise<void> => {
-	await apiClient.delete('/tutor/availability', {
-		params: { id: slotId },
-	})
+export const getAvailability = async (month: string): Promise<AvailabilitySlot[]> => {
+	const { data } = await apiClient.get('lesson/availability', { params: { month } })
+	return data.items ?? []
 }
 
-export const getLessonCountByDay = async (
-	month: string,
-): Promise<DayLessonCount[]> => {
-	const response = await apiClient.get('lesson/lesson-count/day', {
-		params: { month },
-	})
-	return response.data.items || response.data.days || []
+export const createAvailability = async (slot: {
+	date: string
+	startTime: string
+	endTime: string
+}): Promise<void> => {
+	await apiClient.post('lesson/availability', { ...slot, isAvailable: true })
 }
 
-export const bookAvailabilitySlot = async (
-	availabilityId: string,
-	studentId: string,
-	note?: string,
-): Promise<Lesson> => {
-	const response = await apiClient.post('/lesson/book-from-availability', {
-		availabilityId,
-		studentId,
-		note,
-	})
-	return response.data
+export const deleteAvailability = async (id: string): Promise<void> => {
+	await apiClient.delete(`lesson/availability/${id}`)
+}
+
+export const getLessonCountByDay = async (month: string): Promise<DayLessonCount[]> => {
+	const { data } = await apiClient.get('lesson/lesson-count/day', { params: { month } })
+	return data.items ?? []
+}
+
+export const getBookableStudents = async (tutorId: string): Promise<BookableStudent[]> => {
+	const { data } = await apiClient.get('lesson/availability/bookable-students', { params: { tutorId } })
+	return data.students ?? []
+}
+
+export const bookSlot = async (payload: BookSlotPayload): Promise<void> => {
+	await apiClient.post('lesson/availability/book', payload)
+}
+
+/** Сообщение об ошибке из ответа API (поле errorMessage) или запасной текст. */
+export const getApiErrorMessage = (error: unknown, fallback: string): string => {
+	const data = (error as { response?: { data?: { errorMessage?: string; message?: string } } })?.response?.data
+	return data?.errorMessage || data?.message || fallback
 }

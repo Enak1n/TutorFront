@@ -1,194 +1,250 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { fetchMyChats, ChatPreview, CompanionInfo } from '@api/chat';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { fetchMyChats, type ChatPreview } from '@api/chat';
 import { useChat } from '../../shared/chat/useChat';
+import { useAuth } from '../../shared/auth/AuthContext';
+import { useSSE, isUserOnline } from '../../shared/sse/SSEComponent/SSEContext';
+import { Avatar } from '@components/ui/Avatar/Avatar';
+import { ChatBubbleIcon, SearchIcon } from '@components/ui/icons';
 import ChatComponent from './ChatComponent';
 // @ts-ignore
 import styles from './MessagesPage.module.scss';
-// @ts-ignore
-import loading_list from '@images/loading_drop_list.gif'
-import {useSSE} from "../../shared/sse/SSEComponent/SSEContext";
+
+const ROLE_LABELS: Record<string, string> = {
+    student_or_parent: 'Ученик / родитель',
+    admin: 'Администратор',
+    tutor: 'Репетитор',
+};
+
+/** Сегодня — время, вчера — «вчера», на этой неделе — день недели, иначе дата. */
+const formatChatTime = (iso: string | null): string => {
+    if (!iso) return '';
+
+    const date = new Date(iso);
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const dayMs = 24 * 60 * 60 * 1000;
+
+    if (date.getTime() >= startOfToday) {
+        return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    }
+    if (date.getTime() >= startOfToday - dayMs) return 'вчера';
+    if (date.getTime() >= startOfToday - 6 * dayMs) {
+        return date.toLocaleDateString('ru-RU', { weekday: 'short' });
+    }
+    return date.toLocaleDateString('ru-RU', {
+        day: 'numeric',
+        month: 'short',
+        ...(date.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {}),
+    });
+};
+
+const fullName = (chat: ChatPreview) =>
+    `${chat.companion.firstName ?? ''} ${chat.companion.lastName ?? ''}`.trim() || 'Без имени';
 
 const MessagesPage: React.FC = () => {
-    const { chatId: urlChatId } = useParams<{ chatId: string }>(); // Получаем chatId из URL
+    const { chatId: activeChatId } = useParams<{ chatId: string }>();
     const navigate = useNavigate();
-    const { stopChatConnection } = useChat();
+    const { userId } = useAuth();
+    const { stopChatConnection, state: chatState } = useChat();
+    const { resetNotificationCount, sseData } = useSSE();
 
     const [chats, setChats] = useState<ChatPreview[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    const [companionForChat, setCompanionForChat] = useState<CompanionInfo | undefined>(undefined);
-
-    const { resetNotificationCount, sseData } = useSSE()
+    const [query, setQuery] = useState('');
+    const hasLoadedRef = useRef(false);
 
     useEffect(() => {
-        if (resetNotificationCount) {
-            resetNotificationCount();
-        }
+        resetNotificationCount();
     }, [resetNotificationCount]);
 
+    /** Загрузка списка. Повторные обновления идут «тихо», без экрана загрузки. */
+    const loadChats = useCallback(async () => {
+        try {
+            const data = await fetchMyChats();
+            setChats(data);
+            setError(null);
+        } catch (err: any) {
+            if (!hasLoadedRef.current) {
+                setError('Не удалось загрузить список чатов. ' + (err?.message || 'Произошла ошибка.'));
+            }
+        } finally {
+            hasLoadedRef.current = true;
+            setIsLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        let isCancelled = false;
-
-        const loadChats = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const data = await fetchMyChats();
-                if (isCancelled) return;
-
-                setChats(data);
-
-                if (urlChatId) {
-                    const activeChat = data.find(chat => chat.chatId === urlChatId);
-                    if (activeChat) {
-                        setCompanionForChat(activeChat.companion);
-                    } else {
-                        setCompanionForChat(undefined);
-                    }
-                } else {
-                    setCompanionForChat(undefined);
-                }
-
-                setIsLoading(false);
-            } catch (err: any) {
-                if (!isCancelled) {
-                    setError('Не удалось загрузить список чатов. ' + (err.message || 'Произошла ошибка.'));
-                    setIsLoading(false);
-                }
-            }
-        };
-
         loadChats();
+    }, [loadChats, activeChatId]);
 
-        return () => {
-            isCancelled = true;
-        };
-    }, [urlChatId]);
+    // Новое уведомление о сообщении или новое сообщение в открытом чате — обновляем превью и счётчики.
+    const messageCount = chatState.currentChatMessages.length;
+    useEffect(() => {
+        if (!hasLoadedRef.current) return;
+        const timer = setTimeout(loadChats, 400);
+        return () => clearTimeout(timer);
+    }, [sseData.globalNotificationCount, messageCount, loadChats]);
 
-    const handleChatClick = useCallback((chat: ChatPreview) => {
-        navigate(`/messages/${chat.chatId}`);
-    }, [navigate]);
+    const activeChat = useMemo(
+        () => chats.find(chat => chat.chatId === activeChatId),
+        [chats, activeChatId],
+    );
 
-    const handleChatClose = useCallback(() => {
-        navigate('/messages');
-    }, [navigate]);
+    const visibleChats = useMemo(() => {
+        const normalized = query.trim().toLowerCase();
+        if (!normalized) return chats;
+        return chats.filter(chat => fullName(chat).toLowerCase().includes(normalized));
+    }, [chats, query]);
 
-    if (isLoading) {
+    const openChat = useCallback((chatId: string) => navigate(`/messages/${chatId}`), [navigate]);
+    const closeChat = useCallback(() => navigate('/messages'), [navigate]);
+
+    const hasActiveChat = Boolean(activeChatId);
+
+    const renderList = () => {
+        if (isLoading) {
+            return (
+                <div className={styles.listState}>
+                    {Array.from({ length: 5 }).map((_, index) => (
+                        <div key={index} className={styles.skeletonItem}>
+                            <span className={styles.skeletonAvatar} />
+                            <span className={styles.skeletonLines}>
+                                <span />
+                                <span />
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        if (error) return <p className={styles.listMessage}>{error}</p>;
+
+        if (chats.length === 0) {
+            return (
+                <div className={styles.emptyList}>
+                    <span className={styles.emptyIcon}>
+                        <ChatBubbleIcon size={26} />
+                    </span>
+                    <p>Диалогов пока нет</p>
+                    <span>Начните переписку со страницы «Мои ученики» или «Мои репетиторы».</span>
+                </div>
+            );
+        }
+
+        if (visibleChats.length === 0) return <p className={styles.listMessage}>Никого не нашли</p>;
+
         return (
-            <div
-                className={styles.loading}
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    height: "100vh",
-                }}
-            >
-                <img
-                    src={loading_list}
-                    alt="Загрузка календаря..."
-                    style={{
-                        width: '80px',
-                        height: '80px',
-                        marginBottom: '10px'
-                    }}
-                />
-                <div>Загрузка чатов...</div>
-            </div>
+            <ul className={styles.dialogueList}>
+                {visibleChats.map(chat => {
+                    const companion = chat.companion;
+                    const isActive = chat.chatId === activeChatId;
+                    const hasUnread = chat.unreadCount > 0 && !isActive;
+                    const isMine = chat.lastMessageSenderId && chat.lastMessageSenderId === userId;
+
+                    return (
+                        <li key={chat.chatId}>
+                            <button
+                                type='button'
+                                className={[
+                                    styles.dialogueItem,
+                                    isActive ? styles.dialogueItemActive : '',
+                                    hasUnread ? styles.dialogueItemUnread : '',
+                                ].join(' ')}
+                                onClick={() => openChat(chat.chatId)}
+                                aria-current={isActive ? 'true' : undefined}
+                            >
+                                <Avatar
+                                    src={companion.photoUrl}
+                                    firstName={companion.firstName}
+                                    lastName={companion.lastName}
+                                    size={48}
+                                    online={isUserOnline(sseData.userPresence, companion.id)}
+                                />
+
+                                <span className={styles.dialogueBody}>
+                                    <span className={styles.dialogueTop}>
+                                        <span className={styles.name}>{fullName(chat)}</span>
+                                        <span className={styles.time}>{formatChatTime(chat.lastMessageTime)}</span>
+                                    </span>
+                                    <span className={styles.dialogueBottom}>
+                                        <span className={styles.lastMessage}>
+                                            {isMine && <span className={styles.youPrefix}>Вы: </span>}
+                                            {chat.lastMessage || (
+                                                <span className={styles.roleHint}>
+                                                    {ROLE_LABELS[companion.role.id] ?? 'Нет сообщений'}
+                                                </span>
+                                            )}
+                                        </span>
+                                        {hasUnread && (
+                                            <span className={styles.unreadBadge}>
+                                                {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
+                                            </span>
+                                        )}
+                                    </span>
+                                </span>
+                            </button>
+                        </li>
+                    );
+                })}
+            </ul>
         );
-    }
-
-    if (error) {
-        return <div className={styles.error}>{error}</div>;
-    }
-
-    if (urlChatId && companionForChat) {
-        return (
-            <div className={styles.container}>
-                <ChatComponent
-                    partner={companionForChat}
-                    onClose={handleChatClose}
-                    stopConnectionOnUnmount={stopChatConnection}
-                />
-            </div>
-        );
-    }
-
-    if (urlChatId && !companionForChat) {
-        return <div className={styles.error}>Чат не найден или у вас нет доступа.</div>;
-    }
-
-    const roleDisplayMap: Record<string, string> = {
-        'student_or_parent': 'Ученик/Родитель',
-        'admin': 'Администратор',
-        'tutor': 'Репетитор',
     };
 
-    const getRoleDisplayName = (roleId: string): string => {
-        return roleDisplayMap[roleId] || roleId;
+    const renderConversation = () => {
+        if (!hasActiveChat) {
+            return (
+                <div className={styles.placeholder}>
+                    <span className={styles.placeholderIcon}>
+                        <ChatBubbleIcon size={32} />
+                    </span>
+                    <h3>Выберите диалог</h3>
+                    <p>Сообщения появятся здесь. Статус собеседника видно по точке на аватаре.</p>
+                </div>
+            );
+        }
+
+        if (!activeChat) {
+            return (
+                <div className={styles.placeholder}>
+                    <h3>{isLoading ? 'Загружаем диалог…' : 'Чат не найден'}</h3>
+                    {!isLoading && <p>Возможно, у вас нет доступа к этому диалогу.</p>}
+                </div>
+            );
+        }
+
+        return (
+            <ChatComponent
+                key={activeChat.companion.id}
+                partner={activeChat.companion}
+                onClose={closeChat}
+                stopConnectionOnUnmount={stopChatConnection}
+            />
+        );
     };
 
     return (
-        <div className={styles.container}>
-            <h2 className={styles.pageTitle}>Сообщения</h2>
-            <div className={styles.dialogueList}>
-                {chats.length === 0 ? (
-                    <p className={styles.emptyList}>Активных диалогов нет.</p>
-                ) : (
-                    chats.map(chat => {
-                        const companion = chat.companion;
+        <div className={`${styles.page} ${hasActiveChat ? styles.pageChatOpen : ''}`}>
+            <aside className={styles.sidebar} aria-label='Диалоги'>
+                <div className={styles.sidebarHeader}>
+                    <h1 className={styles.title}>Сообщения</h1>
+                    <label className={styles.search}>
+                        <SearchIcon size={18} />
+                        <input
+                            type='search'
+                            value={query}
+                            onChange={event => setQuery(event.target.value)}
+                            placeholder='Поиск по имени'
+                            aria-label='Поиск по диалогам'
+                        />
+                    </label>
+                </div>
+                <div className={styles.sidebarBody}>{renderList()}</div>
+            </aside>
 
-                        const isOnline = sseData.userPresence[companion.id] === 'online';
-
-                        const formattedTime = chat.lastMessageTime
-                            ? new Date(chat.lastMessageTime).toLocaleDateString()
-                            : '';
-
-                        const lastMessageText = chat.lastMessage || 'Нет сообщений';
-                        const hasUnread = chat.unreadCount > 0;
-
-                        return (
-                            <div
-                                key={chat.chatId}
-                                className={styles.dialogueItem}
-                                onClick={() => handleChatClick(chat)}
-                            >
-                                <div className={styles.avatarContainer}>
-                                    <img
-                                        src={companion.photoUrl || '/default-avatar.png'}
-                                        alt={companion.firstName}
-                                        className={styles.avatar}
-                                    />
-                                    {isOnline && (
-                                        <span className={styles.statusIndicator} />
-                                    )}
-                                </div>
-                                <div className={styles.info}>
-                                    <div className={styles.header}>
-                                        <span className={styles.name}>
-                                            {companion.firstName} {companion.lastName}
-                                            <span className={styles.role}>({getRoleDisplayName(companion.role.id)})</span>
-                                        </span>
-                                        <span className={styles.date}>
-                                            {formattedTime}
-                                        </span>
-                                    </div>
-                                    <p className={styles.lastMessage} style={{ fontWeight: hasUnread ? 'bold' : 'normal' }}>
-                                        {lastMessageText}
-                                    </p>
-                                </div>
-                                {hasUnread && (
-                                    <span className={styles.unreadBadge}>{chat.unreadCount}</span>
-                                )}
-                            </div>
-                        );
-                    })
-                )}
-            </div>
+            <section className={styles.conversation}>{renderConversation()}</section>
         </div>
     );
 };

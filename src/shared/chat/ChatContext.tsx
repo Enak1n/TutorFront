@@ -6,11 +6,7 @@ import {fileToBytes} from "../utils/fileConverter.ts";
 
 export const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
-const CHAT_HUB_URL = 'https://api.ugolok-repetitora.ru/chatHub';
-const API_BASE_URL = 'https://api.ugolok-repetitora.ru/';
-
-// const CHAT_HUB_URL = 'http://localhost:5211/chatHub';
-// const API_BASE_URL = 'http://localhost:5211/';
+import { CHAT_HUB_URL, toApiUrl } from '../config/api';
 
 const initialState: ChatState = {
     connection: null,
@@ -19,7 +15,6 @@ const initialState: ChatState = {
     currentChatMessages: [],
     activeChatUser: null,
     unreadCount: 0,
-    onlineUsers: {},
     historyPage: 1,
     hasMoreHistory: true,
 };
@@ -53,9 +48,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, [internalMarkAsRead]);
 
     const getFullUrl = useCallback((relativeUrl: string): string => {
-        if (!relativeUrl) return '';
-        const cleanRelativeUrl = relativeUrl.startsWith('/') ? relativeUrl.substring(1) : relativeUrl;
-        return `${API_BASE_URL}${cleanRelativeUrl}`;
+        return toApiUrl(relativeUrl);
     }, []);
 
     const loadHistory = useCallback(async (withUserId: string, page: number = 1, pageSize: number = 30) => {
@@ -121,17 +114,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, [markAsRead, getFullUrl]);
 
     const setupConnectionHandlers = useCallback((connectionToStart: signalR.HubConnection) => {
-        connectionToStart.on("ReceiveUserStatus", (fromUserId: string, isOnline: boolean) => {
-            setState(prev => ({
-                ...prev,
-                onlineUsers: {
-                    ...prev.onlineUsers,
-                    [fromUserId]: isOnline
-                }
-            }));
-            console.log(`[Chat] User ${fromUserId} is now ${isOnline ? 'online' : 'offline'}.`);
-        });
-
         connectionToStart.on(
             'ReceiveMessage',
             (msg: { messageId: string, fromUserId: string; text: string | null; sentAt: string, files: ChatFile[] | null }) => {
@@ -293,9 +275,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             console.log('SignalR Connected on demand.');
         } catch (err: any) {
             console.error('SignalR connection failed on start: ', err);
-            connectionToStart?.off("ReceiveUserStatus");
             connectionToStart?.off("ReceiveMessage");
-            connectionToStart?.off("MessagesRead");
+            connectionToStart?.off("ReadMessage");
             connectionRef.current = null;
 
             setState(prev => ({
@@ -312,8 +293,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (connection?.state === signalR.HubConnectionState.Connected ||
             connection?.state === signalR.HubConnectionState.Connecting ||
             connection?.state === signalR.HubConnectionState.Reconnecting) {
-
-            connection.off("ReceiveUserStatus");
             connection.off("ReceiveMessage");
             connection.off("ReadMessage");
             connection.off("reconnecting");
@@ -416,7 +395,6 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         loadHistory,
         markAsRead: internalMarkAsRead,
         setActiveChat,
-        onlineUsers: state.onlineUsers,
         startChatConnection,
         stopChatConnection,
         leaveChat,

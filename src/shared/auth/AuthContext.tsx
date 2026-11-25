@@ -6,7 +6,13 @@ import React, {
 	ReactNode,
 	useCallback,
 } from 'react'
-import { UserDetailedInfo } from '@api/auth'
+import type { UserDetailedInfo } from '@api/auth'
+import {
+	AUTH_CHANGED_EVENT,
+	readAuthData,
+	readStoredUserInfo,
+	saveUserInfo,
+} from './authStorage'
 
 interface AuthContextType {
 	token: string | null
@@ -19,48 +25,52 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-const readAuthData = (): {
-	token: string | null
-	userId: string | null
-	role: string | null
-} => {
-	const token = localStorage.getItem('authToken')
-	const userId = localStorage.getItem('id')
-	const role = localStorage.getItem('role')
-
-	return {
-		token: token || null,
-		userId: userId || null,
-		role: role || null,
-	}
-}
-
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 	children,
 }) => {
 	const [authData, setAuthData] = useState(readAuthData)
-	const [userInfo, setUserInfo] = useState<UserDetailedInfo | null>(null)
+	const [userInfoState, setUserInfoState] = useState<UserDetailedInfo | null>(
+		() => readStoredUserInfo(),
+	)
 
 	const syncAuthData = useCallback(() => {
-		setAuthData(readAuthData())
+		const nextAuthData = readAuthData()
+		setAuthData(nextAuthData)
+		setUserInfoState(nextAuthData.token ? readStoredUserInfo() : null)
+	}, [])
+
+	const setUserInfo = useCallback((data: UserDetailedInfo | null) => {
+		setUserInfoState(data)
+		saveUserInfo(data)
 	}, [])
 
 	useEffect(() => {
 		const handleStorageChange = () => {
-			setAuthData(readAuthData())
-			setUserInfo(null)
+			syncAuthData()
+		}
+
+		const handleVisibilityChange = () => {
+			if (document.visibilityState === 'visible') {
+				syncAuthData()
+			}
 		}
 
 		window.addEventListener('storage', handleStorageChange)
+		window.addEventListener(AUTH_CHANGED_EVENT, handleStorageChange)
+		window.addEventListener('pageshow', handleStorageChange)
+		document.addEventListener('visibilitychange', handleVisibilityChange)
 
 		return () => {
 			window.removeEventListener('storage', handleStorageChange)
+			window.removeEventListener(AUTH_CHANGED_EVENT, handleStorageChange)
+			window.removeEventListener('pageshow', handleStorageChange)
+			document.removeEventListener('visibilitychange', handleVisibilityChange)
 		}
-	}, [])
+	}, [syncAuthData])
 
 	const contextValue = {
 		...authData,
-		userInfo,
+		userInfo: userInfoState,
 		setUserInfo,
 		syncAuthData,
 	}

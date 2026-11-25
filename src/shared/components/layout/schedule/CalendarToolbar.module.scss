@@ -1,0 +1,91 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--radius-full);
+  background: var(--surface-2);
+}
+
+.segment {
+  height: 32px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-subtle);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transition: background-color var(--transition), color var(--transition), box-shadow var(--transition);
+
+  &:hover {
+    color: var(--text);
+  }
+}
+
+.segmentActive,
+.segmentActive:hover {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+.navigation {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.arrow {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text);
+  font-size: 1.4rem;
+  line-height: 1;
+
+  &:hover {
+    background: var(--surface-2);
+  }
+}
+
+.title {
+  min-width: 150px;
+  color: var(--text);
+  font-size: var(--text-md);
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.todayButton {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-left: 4px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-muted);
+
+  &:hover:not(:disabled) {
+    background: var(--surface-2);
+    color: var(--accent);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}

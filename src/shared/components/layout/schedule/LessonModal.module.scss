@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: var(--overlay);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -13,13 +13,13 @@
 }
 
 .modalContent {
-  background-color: #fff;
+  background-color: var(--surface);
   position: relative;
   padding: 30px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   width: 90%;
   max-width: 500px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-md);
   animation: fadeIn 0.3s ease-out;
   max-height: 95vh;
   overflow-y: auto;
@@ -29,17 +29,17 @@
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 20px;
-  color: #1a1a1a;
-  border-bottom: 2px solid #f0f0f0;
+  color: var(--text);
+  border-bottom: 2px solid var(--border);
   padding-bottom: 10px;
 }
 
 .errorText {
-  color: #c53030;
-  background-color: #fff5f5;
-  border: 1px solid #fed7d7;
+  color: var(--danger);
+  background-color: var(--surface-2);
+  border: 1px solid var(--danger-border);
   padding: 10px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   margin-bottom: 15px;
   text-align: center;
 }
@@ -54,7 +54,7 @@ label {
   display: flex;
   font-weight: 600;
   margin-bottom: 6px;
-  color: #555;
+  color: var(--text-muted);
   font-size: 0.95rem;
   align-items: center;
 }
@@ -63,34 +63,34 @@ label {
 .textareaInput {
   width: 100%;
   padding: 10px;
-  border: 1px solid #777777;
-  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
   box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
   font-size: 1rem;
-  background-color: #fff;
-  color: #1a1a1a;
+  background-color: var(--surface);
+  color: var(--text);
   cursor: pointer;
   min-width: 0;
 }
 
 .selectInput:focus,
 .textareaInput:focus {
-  border-color: #0066ff;
+  border-color: var(--accent);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .readOnlyInput {
   width: 50%;
   padding: 10px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: #f8f9ff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: var(--surface);
   font-size: 14px;
   cursor: default;
   font-weight: 500;
-  color: #555;
+  color: var(--text-muted);
 }
 
 .timeGroup, .categoryGroup {
@@ -124,11 +124,11 @@ label {
 .timeValue {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #0066ff;
+  color: var(--accent);
   margin-top: 0;
   padding: 5px 10px;
-  background-color: #f0f4ff;
-  border-radius: 8px;
+  background-color: var(--surface-2);
+  border-radius: var(--radius-sm);
   line-height: 1.5;
   box-sizing: border-box;
   height: 40px;
@@ -142,7 +142,7 @@ label {
   align-items: center;
   margin-bottom: 20px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: var(--text);
 }
 
 .checkboxGroup input[type="checkbox"] {
@@ -161,25 +161,25 @@ label {
 
 .deleteButton {
   padding: 10px 20px;
-  border: 1px solid #ff4d4d;
-  border-radius: 8px;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 600;
   transition: background-color 0.2s, opacity 0.2s, border-color 0.2s;
   flex-shrink: 0;
 
-  background-color: #fff;
-  color: #ff4d4d;
+  background-color: var(--surface);
+  color: var(--danger);
 }
 
 .deleteButton:hover:not(:disabled) {
-  background-color: #ffe6e6;
-  border-color: #ff1a1a;
+  background-color: var(--danger-soft);
+  border-color: var(--danger);
 }
 
 .deleteButton:disabled {
-  background-color: #f7f7f7;
-  color: #a8a8a8;
+  background-color: var(--surface-2);
+  color: var(--text-subtle);
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -187,7 +187,7 @@ label {
 .primaryButton, .secondaryButton {
   padding: 10px 20px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 600;
   transition: background-color 0.2s, opacity 0.2s, border-color 0.2s;
@@ -195,29 +195,29 @@ label {
 }
 
 .primaryButton {
-  background-color: #0066ff;
-  color: white;
+  background-color: var(--accent);
+  color: var(--text-on-accent);
 }
 
 .primaryButton:hover:not(:disabled) {
-  background-color: #0050cc;
+  background-color: var(--accent);
 }
 
 .primaryButton:disabled {
-  background-color: #e2e8f0;
-  color: #555;
+  background-color: var(--surface-3);
+  color: var(--text-muted);
   cursor: not-allowed;
   opacity: 0.8;
 }
 
 .secondaryButton {
-  background-color: #fff;
-  border-color: #555;
-  color: #f50000;
+  background-color: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--danger);
 }
 
 .secondaryButton:hover:not(:disabled) {
-  background-color: #f7f7f7;
+  background-color: var(--surface-2);
 }
 
 @keyframes fadeIn {
@@ -268,7 +268,7 @@ label {
   border: none;
   font-size: 24px;
   font-weight: 300;
-  color: #555;
+  color: var(--text-muted);
   cursor: pointer;
   line-height: 1;
   padding: 0;
@@ -276,12 +276,12 @@ label {
   z-index: 1000;
 
   &:hover {
-    color: #c53030;
+    color: var(--danger);
   }
 }
 
 .requiredAsterisk {
-  color: #c53030;
+  color: var(--danger);
   margin-left: 4px;
   font-weight: 700;
   font-size: 1rem;

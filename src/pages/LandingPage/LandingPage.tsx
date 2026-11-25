@@ -12,7 +12,9 @@ const LandingPage = () => {
 	const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null)
 
 	const handleStartClick = () => {
-		window.dispatchEvent(new CustomEvent('showMigrationModal'))
+		window.dispatchEvent(
+			new CustomEvent('openAuthModal', { detail: { mode: 'register' } }),
+		)
 	}
 
 	const toggleFaq = (index: number) => {

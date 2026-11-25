@@ -20,13 +20,13 @@ import { ParentStudentLinkPage } from '@pages/AdminPage/ParentStudentLinkPage'
 import UserProfilePage from '@pages/UserProfilePage/UserProfilePage'
 import { PersonStatisticPage } from '@pages/PersonStatisticPage/PersonStatisticPage'
 import { TutorStudentLinkPage } from '../pages/AdminPage/TutorStudentLinkPage'
-// @ts-ignore
-import loadingGif from '@images/loading.gif'
-import { loginWithTelegram, getUserInfo } from '@api/auth'
-import type { TelegramUser } from '@components/auth/TelegramLoginButton'
-import '../styles/global.scss'
+import {
+	AuthUnauthorizedError,
+	getUserInfo,
+	type LoginV2Response,
+	type UserDetailedInfo,
+} from '@api/auth'
 import { AlertProvider } from '@components/ui/alert/AlertContext'
-import { useAlert } from '@components/ui/alert/AlertContext'
 import { AuthProvider } from '../shared/auth/AuthContext'
 import { useAuth } from '../shared/auth/AuthContext'
 import { ChatProvider } from '../shared/chat/ChatContext'
@@ -34,17 +34,30 @@ import { SSEProvider } from '../shared/sse/SSEComponent/SSEContext'
 import { NotificationProvider } from '@components/notification/NotificationToast'
 import { useLocation } from 'react-router-dom'
 import { ProtectedRoute } from '@components/auth/ProtectedRoute'
-import { LoginModal } from '@components/layout/Header/LoginModal'
+import { clearAuthSession, saveAuthSession } from '@auth/authStorage'
 
 interface AppContentProps {
 	isAuthenticated: boolean
-	onLogin: (
-		role: 'tutor' | 'student_or_parent',
-		telegramData: TelegramUser,
-	) => void | Promise<void>
 	userRole: 'tutor' | 'student_or_parent' | 'admin' | null
 	navigateToProfile: (userId: string) => void
 	navigateToChat: (chatId: string) => void
+}
+
+const createFallbackUserInfo = (
+	userId: string | null,
+	role: string | null,
+): UserDetailedInfo | null => {
+	if (!userId || !role) return null
+
+	return {
+		id: userId,
+		firstName: '',
+		lastName: '',
+		photoUrl: '',
+		username: '',
+		email: null,
+		role: { id: role },
+	}
 }
 
 const AppContent = ({
@@ -53,7 +66,8 @@ const AppContent = ({
 	navigateToProfile,
 	navigateToChat,
 }: AppContentProps) => {
-	const defaultAuthenticatedRoute = '/'
+	const defaultAuthenticatedRoute =
+		userRole === 'admin' ? '/admin' : '/schedule'
 
 	const routes = [
 		{
@@ -217,7 +231,15 @@ const AppContent = ({
 				</ProtectedRoute>
 			),
 		},
-		{ path: '*', element: <div>404 Page Not Found</div> },
+		{
+			path: '*',
+			element: (
+				<div className='app-not-found'>
+					<h1>404</h1>
+					<p>Такой страницы нет. Проверьте адрес или вернитесь на главную.</p>
+				</div>
+			),
+		},
 	]
 
 	const element = useRoutes(routes)
@@ -226,17 +248,14 @@ const AppContent = ({
 
 export const AppLogic = () => {
 	const location = useLocation()
-	const isChatPage =
-		location.pathname.startsWith('/messages/') &&
-		location.pathname.length > '/messages/'.length
+	const isChatPage = location.pathname.startsWith('/messages')
 	const navigate = useNavigate()
-	const { token, role, userInfo, setUserInfo, syncAuthData } = useAuth()
-	const { showAlert } = useAlert()
+	const { token, userId, role, userInfo, setUserInfo, syncAuthData } = useAuth()
 	const isAuthenticated = !!token
 	const userRole = role as 'tutor' | 'student_or_parent' | 'admin' | null
 
 	const [isLoading, setIsLoading] = useState(true)
-	const [isGlobalModalOpen, setIsGlobalModalOpen] = useState(false)
+	const [isAuthCheckDeferred, setIsAuthCheckDeferred] = useState(false)
 
 	useEffect(() => {
 		const setVh = () => {
@@ -257,87 +276,86 @@ export const AppLogic = () => {
 
 	useEffect(() => {
 		const initAuth = async () => {
-			if (!token || userInfo) {
+			if (!token) {
 				setIsLoading(false)
+				setIsAuthCheckDeferred(false)
 				return
+			}
+			if (userInfo) {
+				setIsLoading(false)
 			}
 			try {
 				const fetchedUserInfo = await getUserInfo()
-				if (fetchedUserInfo)
+				if (fetchedUserInfo) {
 					setUserInfo(fetchedUserInfo) // 🔹 Исправлено: прямой вызов
-				else {
-					localStorage.clear()
+					setIsAuthCheckDeferred(false)
+				} else {
+					clearAuthSession()
+					setUserInfo(null)
 					syncAuthData()
 				}
-			} catch {
-				console.error('[v0] Auth check failed')
-				localStorage.clear()
-				syncAuthData()
-				navigate('/', { replace: true })
+			} catch (error) {
+				if (error instanceof AuthUnauthorizedError) {
+					clearAuthSession()
+					setUserInfo(null)
+					setIsAuthCheckDeferred(false)
+					syncAuthData()
+					navigate('/', { replace: true })
+					return
+				}
+
+				console.warn('[auth] Auth check temporarily failed, keeping session', error)
+
+				if (!userInfo) {
+					const fallbackUserInfo = createFallbackUserInfo(userId, role)
+
+					if (fallbackUserInfo) {
+						setUserInfo(fallbackUserInfo)
+					} else {
+						setIsAuthCheckDeferred(true)
+					}
+				}
 			} finally {
 				setIsLoading(false)
 			}
 		}
 		initAuth()
-	}, [token, setUserInfo, syncAuthData, navigate])
-
-	// 🔹 Авто-открытие модалки при миграции
-	useEffect(() => {
-		const hasAuthToken = localStorage.getItem('authToken')
-		const isMigrationPending =
-			localStorage.getItem('migration_pending') === 'true'
-		if (hasAuthToken && isMigrationPending) {
-			setIsGlobalModalOpen(true)
-		}
-	}, [])
-
-	// Слушатель события от LandingPage
-	useEffect(() => {
-		const handleShowMigration = () => setIsGlobalModalOpen(true)
-		window.addEventListener('showMigrationModal', handleShowMigration)
-		return () =>
-			window.removeEventListener('showMigrationModal', handleShowMigration)
-	}, [])
+	}, [token, userId, role, setUserInfo, syncAuthData, navigate])
 
 	const handleLogin = useCallback(
-		async (
-			selectedRole: 'tutor' | 'student_or_parent' | 'admin',
-			telegramData: TelegramUser,
-		) => {
-			try {
-				const response = await loginWithTelegram(telegramData, selectedRole)
-				localStorage.setItem('authToken', response.accessToken)
-				localStorage.setItem('id', response.id)
-				localStorage.setItem('role', response.role)
-				syncAuthData()
-				navigate(response.role === 'admin' ? '/admin' : '/schedule', {
-					replace: true,
-				})
-			} catch (error) {
-				showAlert('Ошибка авторизации. Попробуйте еще раз.', 'error')
+		(authData: LoginV2Response) => {
+			const nextUserInfo: UserDetailedInfo = {
+				id: authData.id,
+				firstName: authData.firstName,
+				lastName: authData.lastName,
+				photoUrl: authData.photoUrl,
+				username: authData.username,
+				email: authData.email ?? null,
+				role: { id: authData.role },
 			}
+
+			saveAuthSession({
+				token: authData.accessToken,
+				userId: authData.id,
+				role: authData.role,
+				userInfo: nextUserInfo,
+			})
+			setUserInfo(nextUserInfo)
+			setIsAuthCheckDeferred(false)
+			syncAuthData()
+			navigate(authData.role === 'admin' ? '/admin' : '/schedule', {
+				replace: true,
+			})
 		},
-		[showAlert, navigate, syncAuthData],
+		[navigate, setUserInfo, syncAuthData],
 	)
 
-	// 🔹 ИСПРАВЛЕНИЕ: Очистка ВСЕХ ключей миграции при выходе
 	const handleLogout = async () => {
 		setUserInfo(null)
 		setIsLoading(false)
+		setIsAuthCheckDeferred(false)
 
-		// 🔹 Очистка ВСЕХ ключей миграции
-		localStorage.removeItem('migration_pending')
-		localStorage.removeItem('migration_code_timer')
-		localStorage.removeItem('migration_email')
-		localStorage.removeItem('migration_show_code_verification')
-		localStorage.removeItem('migration_tg_user')
-		localStorage.removeItem('pendingRole') // ← Важно!
-
-		// Очистка авторизации
-		localStorage.removeItem('authToken')
-		localStorage.removeItem('id')
-		localStorage.removeItem('role')
-
+		clearAuthSession()
 		syncAuthData()
 		navigate('/', { replace: true })
 	}
@@ -351,33 +369,14 @@ export const AppLogic = () => {
 		[navigate],
 	)
 
-	if (isLoading || (isAuthenticated && !userInfo)) {
+	if (isLoading || (isAuthenticated && !userInfo && !isAuthCheckDeferred)) {
 		return (
-			<div
-				style={{
-					display: 'flex',
-					flexDirection: 'column',
-					justifyContent: 'center',
-					alignItems: 'center',
-					height: '100vh',
-					fontSize: '18px',
-					color: '#0066ff',
-				}}
-			>
-				<img
-					src={loadingGif}
-					alt='Загрузка...'
-					style={{ width: '128px', height: '128px', marginBottom: '15px' }}
-				/>
+			<div className='app-loader' role='status'>
+				<div className='app-loader__spinner' />
 				<div>Загрузка...</div>
 			</div>
 		)
 	}
-
-	const isMigrationPending =
-		typeof window !== 'undefined'
-			? localStorage.getItem('migration_pending') === 'true'
-			: false
 
 	return (
 		<div className='app-container'>
@@ -393,19 +392,11 @@ export const AppLogic = () => {
 			/>
 			<AppContent
 				isAuthenticated={isAuthenticated}
-				onLogin={handleLogin}
 				userRole={userRole}
 				navigateToProfile={handleNavigateToProfile}
 				navigateToChat={handleNavigateToChat}
 			/>
 			{!isChatPage && <Footer isAuthenticated={isAuthenticated} />}
-
-			<LoginModal
-				isOpen={isGlobalModalOpen}
-				onClose={() => setIsGlobalModalOpen(false)}
-				onLogin={handleLogin}
-				isClosable={!isMigrationPending}
-			/>
 		</div>
 	)
 }

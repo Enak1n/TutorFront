@@ -6,7 +6,7 @@
 
 .title {
   font-size: 2.2rem;
-  color: #007bff;
+  color: var(--accent);
   text-align: center;
   margin-bottom: 30px;
 
@@ -16,13 +16,13 @@
   text-align: center;
   padding: 50px;
   font-size: 1.2rem;
-  color: #333;
+  color: var(--text);
 }
 
 .countMessage {
   text-align: center;
   margin-bottom: 20px;
-  color: #6c757d;
+  color: var(--text-muted);
 }
 
 .cardGrid {
@@ -35,10 +35,10 @@
 // --- Стили Карточки Статистики ---
 
 .statisticCard {
-  background: #ffffff;
-  border-radius: 12px;
+  background: var(--surface);
+  border-radius: var(--radius-md);
   padding: 20px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
   border-left: 8px solid;
   transition: transform 0.2s;
   cursor: pointer;
@@ -49,13 +49,13 @@
 }
 
 .statusGreen {
-  background-color: #e0f7e9;
-  border-left-color: #28a745;
+  background-color: var(--success-soft);
+  border-left-color: var(--success);
 }
 
 .statusYellow {
-  background-color: #fff8e1;
-  border-left-color: #ffc107;
+  background-color: var(--warning-soft);
+  border-left-color: var(--warning);
 }
 
 .cardHeader {
@@ -64,34 +64,34 @@
   align-items: center;
   margin-bottom: 15px;
   padding-bottom: 10px;
-  border-bottom: 1px dashed #e9ecef;
+  border-bottom: 1px dashed var(--border);
 }
 
 .statusLabel {
   font-weight: 700;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   font-size: 0.9rem;
-  .statusGreen & { color: #1e7e34; background-color: #c8e6c9; }
-  .statusYellow & { color: #856404; background-color: #ffe082; }
+  .statusGreen & { color: var(--success-hover); background-color: var(--success-soft); }
+  .statusYellow & { color: var(--warning-hover); background-color: var(--warning-soft); }
 }
 
 .dateLabel {
   font-size: 0.9rem;
-  color: #6c757d;
+  color: var(--text-muted);
 }
 
 .personInfo {
   margin-bottom: 15px;
   padding: 10px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.03);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--text) 3%, transparent);
 }
 
 .personTitle {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #007bff;
+  color: var(--accent);
   margin-bottom: 8px;
 }
 
@@ -111,17 +111,17 @@
 
 .name {
   font-weight: 500;
-  color: #343a40;
+  color: var(--text);
 }
 
 .username {
   font-size: 0.85rem;
-  color: #6c757d;
+  color: var(--text-muted);
 }
 
 .linkId {
   font-size: 0.8rem;
-  color: #adb5bd;
+  color: var(--text-subtle);
   text-align: right;
   margin-top: 10px;
 }
@@ -136,21 +136,21 @@
 
 .pagination button {
   padding: 8px 15px;
-  border: 1px solid #007bff;
-  border-radius: 6px;
-  background-color: #ffffff;
-  color: #007bff;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background-color: var(--surface);
+  color: var(--accent);
   cursor: pointer;
   transition: background-color 0.2s, color 0.2s;
 }
 
 .pagination button:hover:not(:disabled) {
-  background-color: #f0f8ff;
+  background-color: var(--surface-2);
 }
 
 .pagination button.activePage {
-  background-color: #007bff;
-  color: #ffffff;
+  background-color: var(--accent);
+  color: var(--text-on-accent);
   font-weight: bold;
 }
 
@@ -192,5 +192,5 @@
 
 .pagination .dots {
   padding: 8px 5px;
-  color: #6c757d;
+  color: var(--text-muted);
 }

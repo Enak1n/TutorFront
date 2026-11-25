@@ -1,18 +1,18 @@
-$primary-color: #007bff;
-$my-message-bg: #e0f7fa;
-$partner-message-bg: #f5f5f5;
-$border-color: #ddd;
+$primary-color: var(--accent);
+$my-message-bg: var(--accent-soft);
+$partner-message-bg: var(--surface-2);
+$border-color: var(--border);
 
 .chatContainer {
   max-width: 1200px;
   height: 80vh;
   margin: 20px auto;
   border: 1px solid $border-color;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   display: flex;
   flex-direction: column;
-  background-color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: var(--surface);
+  box-shadow: var(--shadow-md);
   overflow: hidden;
 
   @media (max-width: 768px) {
@@ -28,7 +28,7 @@ $border-color: #ddd;
   align-items: center;
   padding: 15px;
   border-bottom: 1px solid $border-color;
-  background-color: #f8f9fa;
+  background-color: var(--surface-2);
   flex-shrink: 0;
 }
 
@@ -40,11 +40,11 @@ $border-color: #ddd;
   cursor: pointer;
   margin-right: 15px;
   padding: 5px 10px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: #e9ecef;
+    background-color: var(--surface-3);
   }
 }
 
@@ -56,13 +56,13 @@ $border-color: #ddd;
     margin: 0;
     font-size: 1.1em;
     font-weight: 600;
-    color: #333;
+    color: var(--text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .separator {
-    color: #999;
+    color: var(--text-subtle);
     margin: 0 5px;
   }
 }
@@ -72,7 +72,7 @@ $border-color: #ddd;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 20px;
-  background-color: #f7f7f7;
+  background-color: var(--surface-2);
   display: flex;
   flex-direction: column;
 
@@ -91,7 +91,7 @@ $border-color: #ddd;
 .statusError {
   text-align: center;
   padding: 10px;
-  color: #dc3545;
+  color: var(--danger);
   font-weight: bold;
 }
 
@@ -104,8 +104,8 @@ $border-color: #ddd;
 
   padding: 10px 15px;
 
-  border-radius: 18px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 
   position: relative;
 
@@ -129,7 +129,7 @@ $border-color: #ddd;
 
   .senderRole {
     font-size: 0.7em;
-    color: #777;
+    color: var(--text-muted);
     margin-left: 5px;
   }
 
@@ -141,7 +141,7 @@ $border-color: #ddd;
 
   .messageTime {
     font-size: 0.75em;
-    color: #888;
+    color: var(--text-muted);
     align-self: flex-end;
     margin-left: 10px;
     display: block;
@@ -155,7 +155,7 @@ $border-color: #ddd;
   border-bottom-left-radius: 2px;
 
   .senderName {
-    color: darken($primary-color, 10%);
+    color: color-mix(in srgb, #{$primary-color} 85%, var(--text));
   }
 }
 .messagePartner {
@@ -166,7 +166,7 @@ $border-color: #ddd;
   border-bottom-right-radius: 2px;
 
   .senderName {
-    color: #4CAF50;
+    color: var(--success);
   }
 
 }
@@ -177,11 +177,11 @@ $border-color: #ddd;
 
   span {
     display: inline-block;
-    background-color: #e9e9e9;
-    color: #777;
+    background-color: var(--surface-3);
+    color: var(--text-muted);
     font-size: 0.8em;
     padding: 5px 10px;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     font-weight: 500;
     user-select: none;
   }
@@ -197,8 +197,8 @@ $border-color: #ddd;
     display: flex;
     align-items: center;
     margin-bottom: 5px;
-    background-color: #f0f0f0;
-    border-radius: 8px;
+    background-color: var(--surface-2);
+    border-radius: var(--radius-sm);
   }
 
   .imageItem {
@@ -209,7 +209,7 @@ $border-color: #ddd;
 
     .imageLink {
       display: block;
-      border-radius: 8px;
+      border-radius: var(--radius-sm);
       overflow: hidden;
 
       .imagePreview {
@@ -225,7 +225,7 @@ $border-color: #ddd;
 
   .fileItem {
     padding: 8px 10px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border);
 
     .fileLink {
       display: flex;
@@ -254,7 +254,7 @@ $border-color: #ddd;
     .fileName {
       display: block;
       font-size: 0.9em;
-      color: #333;
+      color: var(--text);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -287,8 +287,8 @@ $border-color: #ddd;
   position: absolute;
   top: 50%;
   z-index: 10;
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid #ccc;
+  background-color: color-mix(in srgb, var(--surface) 80%, transparent);
+  border: 1px solid var(--border-strong);
   border-radius: 50%;
   padding: 3px;
   cursor: pointer;

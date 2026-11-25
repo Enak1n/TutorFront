@@ -1,3 +1,4 @@
+import { themedSelectStyles } from '@ui/select/selectStyles'
 import React, { useState, useEffect, useMemo } from 'react'
 import {
 	Student,
@@ -510,38 +511,7 @@ export const LessonModal: React.FC<LessonModalProps> = ({
 	const selectedLessonCategoryOption =
 		availableCategoryOptions.find(o => o.value === lessonCategory) || null
 
-	const selectCustomStyles = {
-		menuPortal: (base: any) => ({
-			...base,
-			zIndex: 2000,
-		}),
-		menu: (provided: any) => ({
-			...provided,
-			position: 'absolute',
-		}),
-		control: (provided: any, state: any) => ({
-			...provided,
-			minHeight: '40px',
-			borderRadius: '8px',
-			border: `1px solid ${state.isFocused ? '#0066ff' : '#ccc'}`,
-			boxShadow: state.isFocused ? '0 0 0 1px #0066ff' : 'none',
-			'&:hover': {
-				borderColor: '#0066ff',
-			},
-		}),
-		option: (provided: any, state: any) => ({
-			...provided,
-			backgroundColor: state.isFocused ? 'rgba(0, 102, 255, 0.1)' : 'white',
-			color: '#1a1a1a',
-			cursor: 'pointer',
-			padding: '12px 20px',
-			transition: 'background-color 0.2s',
-		}),
-		indicatorSeparator: (provided: any) => ({
-			...provided,
-			backgroundColor: '#ddd',
-		}),
-	}
+	const selectCustomStyles = themedSelectStyles<OptionType>()
 
 	return (
 		<div className={styles.modalOverlay} onClick={onClose}>

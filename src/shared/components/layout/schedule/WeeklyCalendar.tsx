@@ -6,10 +6,24 @@ import styles from "./WeeklyCalendar.module.scss"
 import { LessonModal } from './LessonModal';
 import { Lesson, getWeekLessons, getLessonById } from '@api/schedule';
 import { LessonCard } from './LessonCard';
+import { getAvailability } from "@api/availability";
+import { minutesToTime, shortTime, timeToMinutes, toDateKey, toMonthKey } from "../../../utils/date";
+
+/** Свободное окно репетитора в минутах от начала суток (время МСК). */
+interface FreeWindow {
+    start: number
+    end: number
+}
 
 interface WeeklyCalendarProps {
     weekOffset: number
     userRole: "tutor" | "student_or_parent"
+    /** Показать только один день недели (0 = понедельник) — режим «День». */
+    dayIndex?: number
+    /** Изменение значения перезагружает занятия. */
+    refreshKey?: number
+    /** Вызывается после создания/изменения/удаления занятия. */
+    onLessonsChanged?: () => void
 }
 
 interface TimeSlot {
@@ -52,8 +66,9 @@ const mapLessonsToCalendar = (lessons: Lesson[]): Record<string, Lesson[]> => {
     return lessonsMap;
 };
 
-export default function WeeklyCalendar({ weekOffset, userRole }: WeeklyCalendarProps) {
+export default function WeeklyCalendar({ weekOffset, userRole, dayIndex, refreshKey = 0, onLessonsChanged }: WeeklyCalendarProps) {
     const [lessonsMap, setLessonsMap] = useState<Record<string, Lesson[]>>({});
+    const [freeWindows, setFreeWindows] = useState<Record<string, FreeWindow[]>>({});
     const [isLoadingLessons, setIsLoadingLessons] = useState(false);
     const [isLessonsError, setIsLessonsError] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -109,31 +124,7 @@ export default function WeeklyCalendar({ weekOffset, userRole }: WeeklyCalendarP
         return days
     }, [weekOffset])
 
-    const weekPeriod = useMemo(() => {
-        const firstDay = weekDays[0].date
-        const lastDay = weekDays[6].date
-
-        const monthNames = [
-            "января",
-            "февраля",
-            "марта",
-            "апреля",
-            "мая",
-            "июня",
-            "июля",
-            "августа",
-            "сентября",
-            "октября",
-            "ноября",
-            "декабря",
-        ]
-
-        if (firstDay.getMonth() === lastDay.getMonth()) {
-            return `${firstDay.getDate()} - ${lastDay.getDate()} ${monthNames[firstDay.getMonth()]} ${firstDay.getFullYear()}`
-        } else {
-            return `${firstDay.getDate()} ${monthNames[firstDay.getMonth()]} - ${lastDay.getDate()} ${monthNames[lastDay.getMonth()]} ${firstDay.getFullYear()}`
-        }
-    }, [weekDays])
+    const visibleDays = dayIndex === undefined ? weekDays : weekDays.slice(dayIndex, dayIndex + 1)
 
 
     const fetchLessons = useCallback(async () => {
@@ -160,7 +151,52 @@ export default function WeeklyCalendar({ weekOffset, userRole }: WeeklyCalendarP
         if (userRole) {
             fetchLessons();
         }
-    }, [weekOffset, userRole, fetchLessons]);
+    }, [weekOffset, userRole, fetchLessons, refreshKey]);
+
+    // Свободные окна показываем репетитору штриховкой прямо в сетке.
+    useEffect(() => {
+        if (userRole !== "tutor") {
+            setFreeWindows({});
+            return;
+        }
+
+        let cancelled = false;
+        const months = Array.from(new Set([toMonthKey(weekDays[0].date), toMonthKey(weekDays[6].date)]));
+
+        Promise.all(months.map(month => getAvailability(month).catch(() => []))).then(results => {
+            if (cancelled) return;
+
+            const byDate: Record<string, FreeWindow[]> = {};
+            results.flat().forEach(slot => {
+                (byDate[slot.date] ??= []).push({
+                    start: timeToMinutes(shortTime(slot.startTime)),
+                    end: timeToMinutes(shortTime(slot.endTime)),
+                });
+            });
+            setFreeWindows(byDate);
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [weekDays, userRole, refreshKey]);
+
+    /** Части окон, попадающие в часовую ячейку, — в процентах от высоты ячейки. */
+    const getFreeSegments = (date: Date, hour: number) => {
+        const cellStart = hour * 60;
+        const cellEnd = cellStart + 60;
+
+        return (freeWindows[toDateKey(date)] ?? [])
+            .map(window => ({ window, from: Math.max(window.start, cellStart), to: Math.min(window.end, cellEnd) }))
+            .filter(segment => segment.to > segment.from)
+            .map(segment => ({
+                top: ((segment.from - cellStart) / 60) * 100,
+                height: ((segment.to - segment.from) / 60) * 100,
+                isWindowStart: segment.from === segment.window.start,
+                isWindowEnd: segment.to === segment.window.end,
+                label: `свободно ${minutesToTime(segment.window.start)}–${minutesToTime(segment.window.end)}`,
+            }));
+    };
 
 
     const handleCellClick = (day: DayColumn, timeSlot: TimeSlot) => {
@@ -202,6 +238,7 @@ export default function WeeklyCalendar({ weekOffset, userRole }: WeeklyCalendarP
         setIsModalOpen(false);
         setModalInitialDate(null);
         fetchLessons();
+        onLessonsChanged?.();
     }
 
     const handleDetailsModalClose = () => {
@@ -215,6 +252,7 @@ export default function WeeklyCalendar({ weekOffset, userRole }: WeeklyCalendarP
         setIsDetailsModalOpen(false);
         setSelectedLesson(null);
         fetchLessons();
+        onLessonsChanged?.();
     }
 
     const handleUpdateSuccess = (updatedLesson: Lesson) => {
@@ -222,6 +260,7 @@ export default function WeeklyCalendar({ weekOffset, userRole }: WeeklyCalendarP
         setIsDetailsModalOpen(false);
         setSelectedLesson(null);
         fetchLessons();
+        onLessonsChanged?.();
     }
 
     const getCellKey = (day: DayColumn, timeSlot: TimeSlot) => {
@@ -241,13 +280,9 @@ export default function WeeklyCalendar({ weekOffset, userRole }: WeeklyCalendarP
 
     return (
         <div className={styles.weeklyCalendar}>
-            <div className={styles.weekPeriod}>
-                <p className={styles.weekPeriodText}>{weekPeriod}</p>
-            </div>
-
             <div className={styles.calendarCard}>
                 <div className={styles.calendarScroll}>
-                    <div className={styles.calendarGrid}>
+                    <div className={`${styles.calendarGrid} ${dayIndex !== undefined ? styles.singleDay : ""}`}>
                         <div className={styles.timeColumnWrapper}>
                             <div className={styles.timeColumn}>Время</div>
                             <div className={styles.timeLabelsColumn}>
@@ -261,7 +296,7 @@ export default function WeeklyCalendar({ weekOffset, userRole }: WeeklyCalendarP
 
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div className={styles.daysWrapper}>
-                                {weekDays.map((day, index) => (
+                                {visibleDays.map((day, index) => (
                                     <div key={index} className={`${styles.dayColumn} ${day.isToday ? styles.today : ""}`}>
                                         <div className={styles.dayName}>{day.dayName}</div>
                                         <div className={styles.dayNumber}>{day.dayNumber}</div>
@@ -275,7 +310,7 @@ export default function WeeklyCalendar({ weekOffset, userRole }: WeeklyCalendarP
 
                                 {timeSlots.map((timeSlot) => (
                                     <div key={timeSlot.hour} className={styles.timeRow}>
-                                        {weekDays.map((day, dayIndex) => {
+                                        {visibleDays.map((day, dayIndex) => {
                                             const cellKey = getCellKey(day, timeSlot)
                                             const cellLessons = lessonsMap[cellKey] || []
 
@@ -289,6 +324,22 @@ export default function WeeklyCalendar({ weekOffset, userRole }: WeeklyCalendarP
                                                         day.isToday ? styles.todayCell : ""
                                                     } ${userRole === "tutor" && !hasLessons ? styles.clickable : ""}`}
                                                 >
+                                                    {getFreeSegments(day.date, timeSlot.hour).map((segment, segmentIndex) => (
+                                                        <div
+                                                            key={segmentIndex}
+                                                            className={[
+                                                                styles.freeSlot,
+                                                                segment.isWindowStart ? styles.freeSlotStart : "",
+                                                                segment.isWindowEnd ? styles.freeSlotEnd : "",
+                                                            ].join(" ")}
+                                                            style={{ top: `${segment.top}%`, height: `${segment.height}%` }}
+                                                            title={segment.label}
+                                                        >
+                                                            {segment.isWindowStart && (
+                                                                <span className={styles.freeSlotLabel}>{segment.label}</span>
+                                                            )}
+                                                        </div>
+                                                    ))}
                                                     {cellLessons.map((lesson) => {
                                                         const isPast = new Date().getTime() > new Date(lesson.endLessonDate).getTime();
 
@@ -338,6 +389,13 @@ export default function WeeklyCalendar({ weekOffset, userRole }: WeeklyCalendarP
                     <div className={`${styles.legendColor} ${styles.legendGray}`} />
                     <span>Завершено</span>
                 </div>
+
+                {userRole === "tutor" && (
+                    <div className={styles.legendItem}>
+                        <div className={`${styles.legendColor} ${styles.legendFree}`} />
+                        <span>Свободное время</span>
+                    </div>
+                )}
 
                 {userRole === "tutor" && (
                     <div className={styles.legendItem}>

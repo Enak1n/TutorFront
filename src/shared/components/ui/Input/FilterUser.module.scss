@@ -1,17 +1,17 @@
 .filterContainer {
   padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   margin-bottom: 20px;
-  background: #fff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
 }
 
 .filterTitle {
   font-size: 1.4rem;
-  color: #1a1a1a;
+  color: var(--text);
   margin-bottom: 15px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border);
   padding-bottom: 10px;
 }
 
@@ -30,8 +30,8 @@
 .selectInput,
 .textInput {
   padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xs);
   font-size: 1rem;
   flex-grow: 1;
   min-width: 100px;
@@ -46,7 +46,7 @@
 .applyButton,
 .resetButton {
   padding: 10px 20px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 600;
   transition: background-color 0.2s;
@@ -54,23 +54,23 @@
 }
 
 .applyButton {
-  background-color: #007bff;
-  color: white;
+  background-color: var(--accent);
+  color: var(--text-on-accent);
   border: none;
 }
 
 .resetButton {
-  background-color: #f8f9fa;
-  color: #6c757d;
-  border: 1px solid #ced4da;
+  background-color: var(--surface-2);
+  color: var(--text-muted);
+  border: 1px solid var(--border-strong);
 }
 
 .applyButton:hover:not(:disabled) {
-  background-color: #0056b3;
+  background-color: var(--accent-hover);
 }
 
 .resetButton:hover:not(:disabled) {
-  background-color: #e9ecef;
+  background-color: var(--surface-3);
 }
 
 .applyButton:disabled,

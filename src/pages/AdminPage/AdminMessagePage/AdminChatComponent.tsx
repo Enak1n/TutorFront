@@ -2,6 +2,7 @@ import React, {useState, useEffect, useRef, useCallback} from 'react';
 import { fetchAdminChatHistory, UserInfo, deleteChatMessage } from '@api/admin-message';
 import { ChatMessage } from '../../../shared/chat/chatTypes';
 import { useAlert } from '@components/ui/alert/AlertContext';
+import { toApiUrl } from '@/shared/config/api';
 // @ts-ignore
 import styles from './AdminChatComponent.module.scss';
 // @ts-ignore
@@ -19,7 +20,6 @@ interface AdminChatProps {
 }
 
 const PAGE_SIZE = 30;
-const API_BASE_URL = 'https://api.ugolok-repetitora.ru';
 
 const AdminChatComponent: React.FC<AdminChatProps> = ({ chatId, firstUser, secondUser, onClose }) => {
     const { showAlert, showConfirm } = useAlert();
@@ -250,7 +250,7 @@ const AdminChatComponent: React.FC<AdminChatProps> = ({ chatId, firstUser, secon
                     <div className={styles.fileList}>
                         {msg.files.map((file, fileIndex) => {
                             const isImage = file.contentType && file.contentType.startsWith('image/');
-                            const fullFileUrl = `${API_BASE_URL}${file.url}`;
+                            const fullFileUrl = toApiUrl(file.url);
 
                             return (
                                 <div

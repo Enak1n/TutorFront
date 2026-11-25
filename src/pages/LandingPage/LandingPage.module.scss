@@ -1,5 +1,5 @@
 .landingPage {
-  font-family: 'Lato', sans-serif;
+  font-family: var(--font-primary);
   width: 100%;
   overflow-x: hidden;
 }
@@ -16,8 +16,8 @@
 
 .hero {
   padding: 80px 0;
-  background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
-  border-bottom: 2px solid rgba(0, 102, 255, 0.1);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface) 100%);
+  border-bottom: 2px solid color-mix(in srgb, var(--accent) 10%, transparent);
 
   @media (max-width: 768px) {
     padding: 40px 0;
@@ -42,12 +42,12 @@
 }
 
 .heroTitle {
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--font-primary);
   font-size: 56px;
   font-weight: 700;
   line-height: 1.2;
   margin: 0 0 16px 0;
-  color: #1a1a1a;
+  color: var(--text);
 
   @media (max-width: 968px) {
     font-size: 42px;
@@ -61,7 +61,7 @@
 .heroSubtitle {
   font-size: 32px;
   font-style: italic;
-  color: #555;
+  color: var(--text-muted);
   margin: 0 0 24px 0;
 
   @media (max-width: 968px) {
@@ -76,7 +76,7 @@
 .heroDescription {
   font-size: 18px;
   line-height: 1.6;
-  color: #333;
+  color: var(--text);
   margin: 0 0 32px 0;
 
   @media (max-width: 480px) {
@@ -101,17 +101,17 @@
   padding: 14px 32px;
   font-size: 16px;
   font-weight: 600;
-  color: white;
-  background: #0066ff;
+  color: var(--text-on-accent);
+  background: var(--accent);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
-    background: #0052cc;
+    background: var(--accent);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent);
   }
 
   @media (max-width: 480px) {
@@ -123,15 +123,15 @@
   padding: 14px 32px;
   font-size: 16px;
   font-weight: 600;
-  color: #0066ff;
-  background: white;
-  border: 2px solid #0066ff;
-  border-radius: 8px;
+  color: var(--accent);
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
-    background: #f0f7ff;
+    background: var(--surface-2);
     transform: translateY(-2px);
   }
 
@@ -147,8 +147,8 @@
   img {
     width: 100%;
     height: auto;
-    border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
   }
 
   @media (max-width: 968px) {
@@ -159,7 +159,7 @@
 /* Features Section */
 .features {
   padding: 80px 0;
-  background: #0066ff;
+  background: var(--accent);
 
   @media (max-width: 768px) {
     padding: 60px 0;
@@ -167,12 +167,12 @@
 }
 
 .sectionTitle {
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--font-primary);
   font-size: 42px;
   font-weight: 700;
   text-align: center;
   margin: 0 0 60px 0;
-  color: #1a1a1a;
+  color: var(--text);
 
   @media (max-width: 768px) {
     font-size: 32px;
@@ -181,7 +181,7 @@
 }
 
 .features .sectionTitle {
-  color: white;
+  color: var(--text-on-accent);
 }
 
 .featuresGrid {
@@ -196,14 +196,14 @@
 
 .featureCard {
   padding: 32px;
-  background: white;
-  border-radius: 12px;
+  background: var(--surface);
+  border-radius: var(--radius-md);
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md);
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 102, 255, 0.15);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 15%, transparent);
   }
 }
 
@@ -216,22 +216,22 @@
   font-size: 22px;
   font-weight: 600;
   margin: 0 0 12px 0;
-  color: #1a1a1a;
+  color: var(--text);
 }
 
 .featureDescription {
   font-size: 16px;
   line-height: 1.6;
-  color: #555;
+  color: var(--text-muted);
   margin: 0;
 }
 
 /* Pricing Section */
 .pricing {
   padding: 80px 0;
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
-  border-top: 2px solid rgba(0, 102, 255, 0.1);
-  border-bottom: 2px solid rgba(0, 102, 255, 0.1);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface) 100%);
+  border-top: 2px solid color-mix(in srgb, var(--accent) 10%, transparent);
+  border-bottom: 2px solid color-mix(in srgb, var(--accent) 10%, transparent);
 
   @media (max-width: 768px) {
     padding: 60px 0;
@@ -252,14 +252,14 @@
 
 .pricingCard {
   padding: 40px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   transition: all 0.3s ease;
 
   &:hover {
     transform: translateY(-8px);
-    box-shadow: 0 12px 32px rgba(0, 102, 255, 0.2);
+    box-shadow: 0 12px 32px color-mix(in srgb, var(--accent) 20%, transparent);
   }
 
   @media (max-width: 768px) {
@@ -273,11 +273,11 @@
 }
 
 .pricingTitle {
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--font-primary);
   font-size: 28px;
   font-weight: 700;
   margin: 0 0 12px 0;
-  color: #1a1a1a;
+  color: var(--text);
 
   @media (max-width: 768px) {
     font-size: 24px;
@@ -287,14 +287,14 @@
 .pricingSubtitle {
   font-size: 16px;
   line-height: 1.6;
-  color: #555;
+  color: var(--text-muted);
   margin: 0 0 20px 0;
 }
 
 .pricingPrice {
   font-size: 36px;
   font-weight: 700;
-  color: #0066ff;
+  color: var(--accent);
   margin: 0 0 24px 0;
 
   @media (max-width: 768px) {
@@ -309,7 +309,7 @@
     font-size: 18px;
     font-weight: 600;
     margin: 0 0 16px 0;
-    color: #1a1a1a;
+    color: var(--text);
   }
 
   ul {
@@ -320,7 +320,7 @@
     li {
       font-size: 16px;
       line-height: 2;
-      color: #333;
+      color: var(--text);
     }
   }
 }
@@ -328,18 +328,18 @@
 .pricingCta {
   font-size: 16px;
   line-height: 1.6;
-  color: #0066ff;
+  color: var(--accent);
   font-weight: 500;
   margin: 0;
   padding-top: 20px;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--border);
 }
 
 /* Stats Section */
 .stats {
   padding: 60px 0;
-  background: #0066ff;
-  color: white;
+  background: var(--accent);
+  color: var(--text-on-accent);
 }
 
 .statsGrid {
@@ -379,7 +379,7 @@
 /* Testimonials Section */
 .testimonials {
   padding: 80px 0;
-  background: white;
+  background: var(--surface);
 
   @media (max-width: 768px) {
     padding: 60px 0;
@@ -398,9 +398,9 @@
 
 .testimonialCard {
   padding: 32px;
-  background: #f8f9ff;
-  border-radius: 12px;
-  border-left: 4px solid #0066ff;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--accent);
 }
 
 .testimonialRating {
@@ -411,7 +411,7 @@
 .testimonialText {
   font-size: 16px;
   line-height: 1.6;
-  color: #333;
+  color: var(--text);
   margin: 0 0 20px 0;
   font-style: italic;
 }
@@ -423,19 +423,19 @@
 
   strong {
     font-size: 16px;
-    color: #1a1a1a;
+    color: var(--text);
   }
 
   span {
     font-size: 14px;
-    color: #777;
+    color: var(--text-muted);
   }
 }
 
 /* FAQ Section */
 .faq {
   padding: 80px 0;
-  background: white;
+  background: var(--surface);
 
   @media (max-width: 768px) {
     padding: 60px 0;
@@ -449,20 +449,20 @@
 
 .faqItem {
   margin-bottom: 16px;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   overflow: hidden;
   transition: all 0.3s ease;
 
   &:hover {
-    border-color: #0066ff;
+    border-color: var(--accent);
   }
 }
 
 .faqQuestion {
   width: 100%;
   padding: 20px 24px;
-  background: white;
+  background: var(--surface);
   border: none;
   display: flex;
   justify-content: space-between;
@@ -471,17 +471,17 @@
   cursor: pointer;
   font-size: 18px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text);
   text-align: left;
   transition: all 0.3s ease;
 
   &:hover {
-    background: #f8f9ff;
+    background: var(--surface);
   }
 
   &.active {
-    background: #f8f9ff;
-    color: #0066ff;
+    background: var(--surface);
+    color: var(--accent);
   }
 
   @media (max-width: 768px) {
@@ -493,7 +493,7 @@
 .faqIcon {
   font-size: 24px;
   font-weight: 400;
-  color: #0066ff;
+  color: var(--accent);
   flex-shrink: 0;
 }
 
@@ -501,7 +501,7 @@
   padding: 0 24px 20px 24px;
   font-size: 16px;
   line-height: 1.6;
-  color: #555;
+  color: var(--text-muted);
   animation: fadeIn 0.3s ease;
 
   @media (max-width: 768px) {
@@ -524,9 +524,9 @@
 /* CTA Section */
 .cta {
   padding: 40px 0;
-  background: #0066ff;
+  background: var(--accent);
   background-size: 40px 40px, 100% 100%;
-  color: #1a1a1a;
+  color: var(--text);
   position: relative;
   overflow: hidden;
 
@@ -560,12 +560,12 @@
   font-size: 80px;
   width: 120px;
   height: 120px;
-  background: white;
+  background: var(--surface);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
   position: absolute;
 
   &:first-child {
@@ -596,11 +596,11 @@
 }
 
 .ctaTitle {
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--font-primary);
   font-size: 48px;
   font-weight: 900;
   margin: 0;
-  color: white;
+  color: var(--text-on-accent);
   text-transform: uppercase;
   letter-spacing: 1px;
   line-height: 1.2;
@@ -624,22 +624,22 @@
   padding: 18px 60px;
   font-size: 20px;
   font-weight: 700;
-  color: #1a1a1a;
-  background: white;
+  color: var(--text);
+  background: var(--surface);
   border: none;
-  border-radius: 50px;
+  border-radius: var(--radius-full);
   cursor: pointer;
   transition: all 0.3s ease;
   text-decoration: none;
   display: inline-block;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-md);
   text-transform: uppercase;
   letter-spacing: 1px;
 
   &:hover {
-    background: #f5f5f5;
+    background: var(--surface-2);
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-lg);
   }
 
   @media (max-width: 768px) {

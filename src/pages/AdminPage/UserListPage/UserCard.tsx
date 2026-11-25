@@ -2,7 +2,7 @@ import type React from "react"
 import { UserListUser } from "@api/user-list";
 // @ts-ignore
 import styles from "./UserCard.module.scss"
-import { useSSE } from "../../../shared/sse/SSEComponent/SSEContext";
+import { useSSE, isUserOnline } from "../../../shared/sse/SSEComponent/SSEContext";
 
 interface UserCardProps {
     user: UserListUser;
@@ -11,8 +11,7 @@ interface UserCardProps {
 
 export const UserCard: React.FC<UserCardProps> = ({ user, onClick }) => {
     const { sseData } = useSSE();
-    const userStatus = sseData.userPresence[user.id];
-    const isOnline = userStatus === 'online';
+    const isOnline = isUserOnline(sseData.userPresence, user.id);
 
     const roleLabel = (roleId: string) => {
         switch (roleId) {

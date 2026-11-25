@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: var(--overlay);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -13,13 +13,13 @@
 }
 
 .modalContent {
-  background-color: #fff;
+  background-color: var(--surface);
   position: relative;
   padding: 30px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   width: 90%;
   max-width: 500px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-md);
   animation: fadeIn 0.3s ease-out;
   max-height: 95vh;
   overflow-y: auto;
@@ -29,17 +29,17 @@
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 20px;
-  color: #1a1a1a;
-  border-bottom: 2px solid #f0f0f0;
+  color: var(--text);
+  border-bottom: 2px solid var(--border);
   padding-bottom: 10px;
 }
 
 .errorText {
-  color: #c53030;
-  background-color: #fff5f5;
-  border: 1px solid #fed7d7;
+  color: var(--danger);
+  background-color: var(--surface-2);
+  border: 1px solid var(--danger-border);
   padding: 10px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   margin-bottom: 15px;
   text-align: center;
 }
@@ -54,7 +54,7 @@ label {
   display: flex;
   font-weight: 600;
   margin-bottom: 6px;
-  color: #555;
+  color: var(--text-muted);
   font-size: 0.95rem;
   align-items: center;
 }
@@ -62,21 +62,21 @@ label {
 .textareaInput {
   width: 100%;
   padding: 10px;
-  border: 1px solid #777777;
-  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
   box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
   font-size: 1rem;
-  background-color: #fff;
-  color: #1a1a1a;
+  background-color: var(--surface);
+  color: var(--text);
   cursor: pointer;
   min-width: 0;
 }
 
 .textareaInput:focus {
-  border-color: #0066ff;
+  border-color: var(--accent);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .buttonGroup {
@@ -89,7 +89,7 @@ label {
 .primaryButton, .secondaryButton {
   padding: 10px 20px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 600;
   transition: background-color 0.2s, opacity 0.2s, border-color 0.2s;
@@ -97,17 +97,17 @@ label {
 }
 
 .primaryButton {
-  background-color: #0066ff;
-  color: white;
+  background-color: var(--accent);
+  color: var(--text-on-accent);
 }
 
 .primaryButton:hover:not(:disabled) {
-  background-color: #0050cc;
+  background-color: var(--accent);
 }
 
 .primaryButton:disabled {
-  background-color: #e2e8f0;
-  color: #555;
+  background-color: var(--surface-3);
+  color: var(--text-muted);
   cursor: not-allowed;
   opacity: 0.8;
 }
@@ -142,7 +142,7 @@ label {
   border: none;
   font-size: 24px;
   font-weight: 300;
-  color: #555;
+  color: var(--text-muted);
   cursor: pointer;
   line-height: 1;
   padding: 0;
@@ -150,19 +150,19 @@ label {
   z-index: 1000;
 
   &:hover {
-    color: #c53030;
+    color: var(--danger);
   }
 }
 
 .requiredAsterisk {
-  color: #c53030;
+  color: var(--danger);
   margin-left: 4px;
   font-weight: 700;
   font-size: 1rem;
 }
 
 .warningText {
-  color: #ff8c00;
+  color: var(--warning);
   font-size: 0.9rem;
   margin-top: 5px;
 }
@@ -170,20 +170,20 @@ label {
 .textarea {
   width: 100%;
   padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xs);
   font-size: 1em;
   resize: vertical; // Разрешаем вертикальное изменение размера
   box-sizing: border-box;
   margin-top: 5px;
 
   &:focus {
-    border-color: #007bff;
+    border-color: var(--accent);
     outline: none;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--accent) 25%, transparent);
   }
   &:disabled {
-    background-color: #f0f0f0;
+    background-color: var(--surface-2);
     cursor: not-allowed;
   }
 }

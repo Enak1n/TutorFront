@@ -2,30 +2,30 @@
   max-width: 850px;
   margin: 40px auto;
   padding: 20px;
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-  color: #333;
-  font-family: 'Inter', sans-serif;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  color: var(--text);
+  font-family: var(--font-primary);
 }
 
 .header {
   text-align: center;
   margin-bottom: 30px;
-  border-bottom: 2px solid #f0f0f0;
+  border-bottom: 2px solid var(--border);
   padding-bottom: 15px;
 }
 
 .title {
   font-size: 2rem;
   font-weight: 700;
-  color: #007bff;
+  color: var(--accent);
   margin-bottom: 5px;
 }
 
 .subtitle {
   font-size: 1.1rem;
-  color: #6c757d;
+  color: var(--text-muted);
   font-style: italic;
 }
 
@@ -45,15 +45,15 @@
   font-weight: 600;
   margin-top: 20px;
   margin-bottom: 10px;
-  color: #343a40;
+  color: var(--text);
 }
 
 .sectionTitle {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #007bff;
+  color: var(--accent);
   margin-bottom: 20px;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--border);
   padding-bottom: 5px;
 }
 

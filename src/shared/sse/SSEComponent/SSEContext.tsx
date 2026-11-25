@@ -1,8 +1,9 @@
-import React, {createContext, useContext, useState, useEffect, useCallback, useRef} from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../auth/AuthContext.tsx';
 import { showMessageToast } from '@components/notification/NotificationToast';
-import { fetchUnreadChatCount } from '@api/chat';
-import {markAllNotificationsAsRead} from "@api/chat";
+import { fetchUnreadChatCount, markAllNotificationsAsRead } from '@api/chat';
+import { SSE_URL } from '@/shared/config/api';
+import { startSseClient, type SseEvent } from '../sseClient';
 
 type UserPresence = Record<string, 'online' | 'offline'>;
 
@@ -24,231 +25,120 @@ const initialSSEData: SSEData = {
     userPresence: {},
 };
 
-const dummyResetNotificationCount = () => {
-};
-
 const SSEContext = createContext<SSEContextType>({
     sseData: initialSSEData,
     isConnected: false,
-    resetNotificationCount: dummyResetNotificationCount,
+    resetNotificationCount: () => {},
 });
 
 export const useSSE = () => useContext(SSEContext);
 
-const RECONNECT_INTERVAL = 5000;
+/** GUID-ы с бэка и фронта могут отличаться регистром — нормализуем ключи. */
+const normalizeId = (id: string) => id.trim().toLowerCase();
+
+/** Онлайн ли пользователь (регистр GUID не важен). */
+export const isUserOnline = (presence: UserPresence, userId: string | null | undefined): boolean =>
+    !!userId && presence[normalizeId(userId)] === 'online';
 
 export const SSEProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { token } = useAuth();
     const [sseData, setSseData] = useState<SSEData>(initialSSEData);
     const [isConnected, setIsConnected] = useState(false);
-    const shouldConnect = useRef(false);
 
-    const abortControllerRef = useRef<AbortController | null>(null);
-
-    const isAuthenticated = !!token;
-
-    const disconnectSSE = useCallback(() => {
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-        }
-        shouldConnect.current = false;
-        setIsConnected(false);
+    const refreshUnreadCount = useCallback(async () => {
+        const count = await fetchUnreadChatCount();
+        setSseData(prev => ({ ...prev, globalNotificationCount: count }));
     }, []);
 
-    const initializeUnreadCount = useCallback(async () => {
-        if (!isAuthenticated) return;
+    // Держим в ref, чтобы подключение не пересоздавалось при каждом рендере.
+    const refreshUnreadCountRef = useRef(refreshUnreadCount);
+    refreshUnreadCountRef.current = refreshUnreadCount;
 
-        const count = await fetchUnreadChatCount();
-
-        setSseData(prevData => ({
-            ...prevData,
-            globalNotificationCount: count,
-        }));
-    }, [isAuthenticated]);
-
-    const connectSSE = useCallback(async () => {
-        if (!isAuthenticated || shouldConnect.current || !token) {
-            return;
-        }
-
-        shouldConnect.current = true;
-        abortControllerRef.current = new AbortController();
-        const signal = abortControllerRef.current.signal;
-
-        // const sseUrl = 'http://localhost:5211/state';
-        const sseUrl = 'https://api.ugolok-repetitora.ru/state'
-
-        try {
-            const response = await fetch(sseUrl, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'text/event-stream',
-                    'Cache-Control': 'no-cache',
-                    'Connection': 'keep-alive',
-                    'Authorization': `Bearer ${token}`,
-                },
-                signal,
-            });
-
-            if (!response.ok) {
-                if (response.status === 401 || response.status === 403) {
-                    disconnectSSE();
-                    return;
+    const handleEvent = useCallback((event: SseEvent) => {
+        switch (event.name) {
+            case 'initial_presence': {
+                try {
+                    const raw = JSON.parse(event.data) as UserPresence;
+                    const userPresence: UserPresence = {};
+                    Object.keys(raw).forEach(id => {
+                        userPresence[normalizeId(id)] = 'online';
+                    });
+                    setSseData(prev => ({ ...prev, userPresence }));
+                } catch (e) {
+                    console.error('[SSE] Некорректный initial_presence:', e);
                 }
-
-                throw new Error(`HTTP error! status: ${response.status}`);
+                break;
             }
 
-            setIsConnected(true);
+            case 'presence': {
+                const separatorIndex = event.data.lastIndexOf(':');
+                const userId = normalizeId(event.data.slice(0, separatorIndex));
+                const status = event.data.slice(separatorIndex + 1);
 
-            const reader = response.body?.getReader();
-            if (!reader) {
-                throw new Error("Response body is not readable.");
-            }
-
-            const decoder = new TextDecoder();
-            let buffer = '';
-
-            while (true) {
-                const { done, value } = await reader.read();
-
-                if (done) {
+                if (!userId || (status !== 'online' && status !== 'offline')) {
+                    console.warn('[SSE] Некорректный формат presence:', event.data);
                     break;
                 }
 
-                buffer += decoder.decode(value, { stream: true });
+                setSseData(prev => {
+                    const userPresence = { ...prev.userPresence };
+                    if (status === 'online') userPresence[userId] = 'online';
+                    else delete userPresence[userId];
+                    return { ...prev, userPresence };
+                });
+                break;
+            }
 
-                const events = buffer.split(/\r?\n\r?\n/);
-                buffer = events.pop() || '';
+            case 'newMessage':
+                showMessageToast(event.data);
+                refreshUnreadCountRef.current().catch(() => undefined);
+                break;
 
-                for (const eventString of events) {
-                    if (eventString.trim() === '') continue;
-
-                    let eventName = 'message';
-                    let payload = '';
-
-                    eventString.split(/\r?\n/).forEach(line => {
-                        line = line.trim();
-                        if (line.startsWith('event:')) {
-                            eventName = line.substring(6).trim();
-                        } else if (line.startsWith('data:')) {
-                            payload += line.substring(5).trim() + '\n';
-                        }
-                    });
-
-                    payload = payload.trim();
-                    if (!payload) continue;
-
-                    if (eventName === 'initial_presence') {
-                        try {
-                            const initialPresence = JSON.parse(payload) as UserPresence;
-
-                            setSseData(prevData => ({
-                                ...prevData,
-                                userPresence: initialPresence,
-                            }));
-                        } catch (e) {
-                        }
-                    } else if (eventName === 'presence') {
-                        const [userId, status] = payload.split(':');
-
-                        if (userId && (status === 'online' || status === 'offline')) {
-                            setSseData(prevData => {
-                                // 1. Создаем копию userPresence
-                                const newUserPresence = {
-                                    ...prevData.userPresence,
-                                };
-
-                                newUserPresence[userId] = status;
-
-                                if (status === 'offline') {
-                                    delete newUserPresence[userId];
-                                }
-                                return ({
-                                    ...prevData,
-                                    userPresence: newUserPresence as UserPresence,
-                                });
-                            });
-                        } else {
-                            console.warn('[SSE] Некорректный формат данных presence:', payload);
-                        }
-
-                    } else if (eventName === 'newMessage') {
-                        showMessageToast(payload);
-                        initializeUnreadCount();
-                    } else {
-                        try {
-                            const parsedData = JSON.parse(payload);
-                            setSseData(prevData => ({
-                                ...prevData,
-                                ...parsedData,
-                            }));
-                        } catch (e) {
-                            console.error('[SSE] Ошибка парсинга JSON для события "' + eventName + '":', e, 'Попытка парсинга:', payload);
-                        }
-                    }
+            default:
+                try {
+                    const parsed = JSON.parse(event.data);
+                    setSseData(prev => ({ ...prev, ...parsed }));
+                } catch {
+                    // Неизвестное событие не в JSON — игнорируем.
                 }
-            }
-
-        } catch (error) {
-            if (signal.aborted) {
-                return;
-            }
-
-        } finally {
-            setIsConnected(false);
-
-            if (shouldConnect.current) {
-                setTimeout(() => {
-                    connectSSE();
-                }, RECONNECT_INTERVAL);
-            }
         }
-    }, [isAuthenticated, token, disconnectSSE]);
+    }, []);
+
+    useEffect(() => {
+        if (!token) {
+            setSseData(initialSSEData);
+            setIsConnected(false);
+            return;
+        }
+
+        refreshUnreadCountRef.current().catch(() => undefined);
+
+        const stop = startSseClient({
+            url: SSE_URL,
+            token,
+            onEvent: handleEvent,
+            onStatusChange: status => {
+                const connected = status === 'connected';
+                setIsConnected(connected);
+                setSseData(prev => ({ ...prev, systemStatus: connected ? 'online' : 'offline' }));
+            },
+        });
+
+        return stop;
+    }, [token, handleEvent]);
 
     const resetNotificationCount = useCallback(async () => {
-        setSseData(prevData => {
-            if (prevData.globalNotificationCount > 0) {
-                return {
-                    ...prevData,
-                    globalNotificationCount: 0,
-                };
-            }
-            return prevData;
-        });
+        setSseData(prev => (prev.globalNotificationCount > 0 ? { ...prev, globalNotificationCount: 0 } : prev));
 
         try {
             await markAllNotificationsAsRead();
         } catch (e) {
-
             console.error('Не удалось сбросить счетчик на сервере:', e);
         }
     }, []);
 
-    // Эффект для управления жизненным циклом потока
-    useEffect(() => {
-        if (isAuthenticated) {
-            initializeUnreadCount();
-            connectSSE();
-        } else {
-            disconnectSSE();
-            setSseData(initialSSEData);
-        }
-
-        return () => {
-            disconnectSSE();
-        };
-    }, [isAuthenticated, connectSSE, disconnectSSE, initializeUnreadCount]);
-
-
-    const contextValue = {
-        sseData,
-        isConnected,
-        resetNotificationCount,
-    };
-
     return (
-        <SSEContext.Provider value={contextValue}>
+        <SSEContext.Provider value={{ sseData, isConnected, resetNotificationCount }}>
             {children}
         </SSEContext.Provider>
     );

@@ -1,81 +1,92 @@
+// Высота часовой строки. От неё считаются позиции карточек занятий (в процентах от ячейки).
+$row-height: 60px;
+$header-height: 72px;
+$time-column: 72px;
+
 .weeklyCalendar {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--spacing-sm);
 }
 
-.weekPeriod {
-  text-align: center;
-}
-
+.weekPeriod,
 .weekPeriodText {
-  font-size: 18px;
-  font-weight: 600;
-  color: #555;
-  margin: 0;
-
-  @media (max-width: 768px) {
-    font-size: 16px;
-  }
+  display: none;
 }
 
 .calendarCard {
-  background: white;
-  border: 2px solid #e0e0e0;
-  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
 }
 
 .calendarScroll {
-  overflow-x: auto;
-  overflow-y: visible;
   position: relative;
   z-index: 1;
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .calendarGrid {
   display: flex;
-  min-width: 900px;
+  min-width: 860px;
 }
 
+// ---------- Колонка времени ----------
 .timeColumnWrapper {
   position: sticky;
   left: 0;
-  z-index: 1000;
-  background: white;
-  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
-}
-
-.calendarHeader {
-  display: flex;
-  background: #f8f9ff;
-  border-bottom: 2px solid #e0e0e0;
+  z-index: 10;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
 }
 
 .timeColumn {
   display: flex;
-  position: sticky;
-  z-index: 100;
   align-items: center;
-  height: 90px;
   justify-content: center;
-  box-sizing: border-box;
-  font-size: 14px;
-  font-weight: 600;
-  color: #555;
-  width: 80px;
-  min-width: 80px;
-  background: #f8f9ff;
-  border-bottom: 1px solid #e0e0e0;
-  border-right: 1px solid #e0e0e0;
+  width: $time-column;
+  min-width: $time-column;
+  height: $header-height;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-subtle);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
 
-  @media (max-width: 768px) {
-    padding: 26px 4px;
-    font-size: 12px;
+.timeLabelsColumn {
+  display: flex;
+  flex-direction: column;
+  width: $time-column;
+  min-width: $time-column;
+}
+
+.timeLabel {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  height: $row-height;
+  min-height: $row-height;
+  padding-top: 6px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-subtle);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+
+  &:last-child {
+    border-bottom: none;
   }
 }
 
+.timeLabelText {
+  display: block;
+}
+
+// ---------- Заголовки дней ----------
 .daysWrapper {
   display: flex;
   flex: 1;
@@ -86,105 +97,52 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 90px;
-  box-sizing: border-box;
-  border-right: 1px solid #e0e0e0;
-  border-bottom: 1px solid #e0e0e0;
-  transition: all 0.3s ease;
+  gap: 2px;
   flex: 1;
   min-width: 100px;
+  height: $header-height;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 
   &:last-child {
     border-right: none;
   }
-
-  &.today {
-    background: rgba(0, 102, 255, 0.1);
-  }
-
-  @media (max-width: 768px) {
-    padding: 12px 4px;
-  }
 }
 
 .dayName {
-  font-size: 14px;
-  font-weight: 600;
-  color: #555;
-  margin-bottom: 4px;
-
-  @media (max-width: 768px) {
-    font-size: 12px;
-  }
+  color: var(--text-subtle);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .dayNumber {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1a1a1a;
-
-  .today & {
-    color: #0066ff;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 18px;
-  }
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  color: var(--text);
+  font-size: var(--text-lg);
+  font-weight: 800;
 }
 
-.calendarBody {
-  display: flex;
-}
-
-.timeLabelsColumn {
-  display: flex;
-  flex-direction: column;
-  width: 80px;
-  min-width: 80px;
-  border-right: 1px solid #e0e0e0;
-  background: #fafafa;
-  box-sizing: border-box;
-  z-index: 100;
-}
-
-.timeLabel {
-  display: flex;
-  align-items: center;
-
-  position: sticky;
-  z-index: 100;
-  left: 0;
-
-  justify-content: center;
-  height: 60px;
-  min-height: 60px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #777;
-  background: #fafafa;
-  box-sizing: border-box;
-
-  border-bottom: 1px solid #e0e0e0;
-
-  &:last-child {
-    border-bottom: none;
+.dayColumn.today {
+  .dayName {
+    color: var(--accent);
   }
 
-  @media (max-width: 768px) {
-    font-size: 12px;
+  .dayNumber {
+    background: var(--accent);
+    color: var(--text-on-accent);
+    box-shadow: var(--shadow-sm);
   }
 }
 
-.timeLabelText {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  z-index: 100;
-}
-
-
+// ---------- Ячейки ----------
 .daysCellsWrapper {
+  position: relative;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -192,8 +150,8 @@
 
 .timeRow {
   display: flex;
-  height: 60px;
-  border-bottom: 1px solid #e0e0e0;
+  height: $row-height;
+  border-bottom: 1px solid var(--border);
 
   &:last-child {
     border-bottom: none;
@@ -201,170 +159,181 @@
 }
 
 .timeCell {
-  padding: 8px;
-  border-right: 1px solid #e0e0e0;
-  box-sizing: border-box;
-  height: 60px;
-  min-height: 60px;
-  transition: all 0.3s ease;
   position: relative;
   flex: 1;
   min-width: 100px;
+  height: $row-height;
+  min-height: $row-height;
+  padding: 0 4px;
+  border-right: 1px solid var(--border);
+  transition: background-color var(--transition);
 
   &:last-child {
     border-right: none;
   }
 
   &.todayCell {
-    background: rgba(0, 102, 255, 0.03);
+    background: color-mix(in srgb, var(--accent) 4%, transparent);
   }
 
   &.clickable {
     cursor: pointer;
 
     &:hover {
-      background: rgba(0, 102, 255, 0.08);
+      background: var(--accent-soft);
+
+      &::after {
+        content: '+';
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: var(--accent);
+        font-size: 1.25rem;
+        font-weight: 700;
+      }
     }
   }
 }
 
-.lessonBlock {
-  background: #0066ff;
-  color: white;
-  padding: 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  margin-bottom: 4px;
-  box-shadow: 0 2px 4px rgba(0, 102, 255, 0.2);
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.lessonStudent {
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.lessonSubject {
-  font-size: 11px;
-  opacity: 0.9;
-  margin-bottom: 4px;
-}
-
-.lessonTime {
-  font-size: 11px;
-  opacity: 0.9;
-}
-
+// ---------- Легенда ----------
 .legend {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  gap: 24px;
-  padding: 16px;
-  background: #f8f9ff;
-  border-radius: 8px;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 12px;
-  }
+  gap: 8px 16px;
+  padding: 4px 2px;
 }
 
 .legendItem {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  color: #555;
-
-  @media (max-width: 768px) {
-    font-size: 13px;
-  }
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
 }
 
 .legendColor {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  border: 1px solid #e0e0e0;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
 
   &.legendToday {
-    background: rgba(0, 102, 255, 0.1);
-    border-color: rgba(0, 102, 255, 0.3);
+    background: var(--accent);
   }
 
   &.legendClickable {
-    background: rgba(0, 102, 255, 0.08);
-    border-color: rgba(0, 102, 255, 0.2);
+    background: var(--accent-soft);
+    border: 1px dashed var(--accent);
   }
 
   &.legendYellow {
-    background-color: #ffc107;
-    border-color: #ffa000;
+    background: var(--warning);
   }
 
   &.legendGreen {
-    background-color: #28a745;
-    border-color: #1e7e34;
+    background: var(--success);
   }
 
   &.legendRed {
-    background-color: #dc3545;
-    border-color: #bd2130;
+    background: var(--danger);
   }
 
   &.legendGray {
-    background-color: #6c757d;
-    border-color: #5a6268;
+    background: var(--border-strong);
   }
 }
 
-.loadingOverlay {
+// ---------- Состояния ----------
+.loadingOverlay,
+.statusMessage,
+.statusMessageError {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
+  inset: 0;
+  z-index: 15;
   display: flex;
-  justify-content: center;
   align-items: center;
-  font-size: 1.2rem;
+  justify-content: center;
+  padding: var(--spacing-md);
+  text-align: center;
   font-weight: 600;
-  color: #0066ff;
-  z-index: 20;
 }
 
-.statusMessage, .statusMessageError {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 1.2rem;
-  font-weight: 600;
-  z-index: 15;
-  background: #fff;
-  padding: 20px;
-  text-align: center;
+.loadingOverlay {
+  background: color-mix(in srgb, var(--surface) 75%, transparent);
+  color: var(--accent);
 }
 
 .statusMessage {
-  color: #555;
-  background: #f8f9ff;
+  background: var(--surface);
+  color: var(--text-muted);
 }
 
 .statusMessageError {
-  color: #c53030;
-  background: #fff5f5;
-  border: 1px solid #fed7d7;
-  border-radius: 8px;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
+// Режим «День»: одна колонка на всю ширину
+.singleDay {
+  min-width: 0;
 
+  .dayColumn,
+  .timeCell {
+    min-width: 0;
+  }
+}
+
+// ---------- Свободные окна репетитора: зелёная штриховка ----------
+.freeSlot {
+  --hatch: color-mix(in srgb, var(--success) 22%, transparent);
+
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 1; // под карточками занятий (у них z-index: 5)
+  pointer-events: none; // клик по ячейке по-прежнему создаёт занятие
+  border-left: 3px solid var(--success);
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      var(--hatch) 0 6px,
+      transparent 6px 12px
+    ),
+    color-mix(in srgb, var(--success-soft) 70%, transparent);
+}
+
+.freeSlotStart {
+  border-top: 1px dashed var(--success);
+  border-top-right-radius: var(--radius-xs);
+}
+
+.freeSlotEnd {
+  border-bottom: 1px dashed var(--success);
+  border-bottom-right-radius: var(--radius-xs);
+}
+
+.freeSlotLabel {
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  max-width: calc(100% - 10px);
+  overflow: hidden;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--success-hover);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-shadow: var(--shadow-xs);
+}
+
+.legendColor.legendFree {
+  border-radius: 3px;
+  border-left: 3px solid var(--success);
+  background: repeating-linear-gradient(-45deg, color-mix(in srgb, var(--success) 30%, transparent) 0 3px, transparent 3px 6px);
+}

@@ -3,7 +3,7 @@ import React from 'react';
 import styles from './PrivacyPolicyPage.module.scss';
 
 // Стилевой класс для выделения текста в секциях
-const highlighted = { fontWeight: 600, color: '#0056b3' };
+const highlighted = { fontWeight: 600, color: 'var(--accent)' };
 
 const PrivacyPolicyPage: React.FC = () => {
     return (

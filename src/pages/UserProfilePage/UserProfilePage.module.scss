@@ -6,7 +6,7 @@
 
 .title {
   font-size: 2.2rem;
-  color: #007bff;
+  color: var(--accent);
   text-align: center;
   margin-bottom: 30px;
   font-weight: 700;
@@ -16,23 +16,23 @@
   text-align: center;
   padding: 50px;
   font-size: 1.2rem;
-  color: #333;
-  background-color: #f8f9fa;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  color: var(--text);
+  background-color: var(--surface-2);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
 }
 
 .errorContainer {
-  color: #dc3545;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
+  color: var(--danger);
+  background-color: var(--danger-soft);
+  border: 1px solid var(--danger-border);
 }
 
 .profileCard {
-  background: #ffffff;
-  border-radius: 12px;
+  background: var(--surface);
+  border-radius: var(--radius-md);
   padding: 30px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -43,9 +43,9 @@
 .photoWrapper {
   margin-bottom: 20px;
   padding: 5px;
-  border: 4px solid #007bff; /* Основной цвет */
+  border: 4px solid var(--accent); /* Основной цвет */
   border-radius: 50%;
-  box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.2);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .profilePhoto {
@@ -65,10 +65,10 @@
 .userName {
   font-size: 1.8rem;
   font-weight: 600;
-  color: #343a40;
+  color: var(--text);
   margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 1px dashed #e9ecef;
+  border-bottom: 1px dashed var(--border);
   text-align: center;
 }
 
@@ -77,7 +77,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .detailItem:last-child {
@@ -86,13 +86,13 @@
 
 .detailLabel {
   font-weight: 500;
-  color: #6c757d;
+  color: var(--text-muted);
   font-size: 1rem;
 }
 
 .detailValue {
   font-weight: 600;
-  color: #007bff;
+  color: var(--accent);
   font-size: 1rem;
   text-align: right;
   word-break: break-all; /* Для длинных ID */
@@ -100,10 +100,10 @@
 
 .note {
   font-size: 0.9rem;
-  color: #999;
+  color: var(--text-subtle);
   margin-top: 15px;
   padding-top: 15px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border);
 }
 
 .actionsContainer {
@@ -114,7 +114,7 @@
   gap: 15px;
   margin-top: 20px;
   padding-top: 10px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border);
 
   @media (max-width: 600px) {
     flex-direction: column;
@@ -129,32 +129,32 @@
 }
 
 .editButton {
-  background-color: #007bff;
-  color: white;
+  background-color: var(--accent);
+  color: var(--text-on-accent);
   border: none;
   padding: 10px 20px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 1rem;
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: #0056b3;
+    background-color: var(--accent-hover);
   }
 }
 
 .deleteButton {
-  background-color: #dc3545;
-  color: white;
+  background-color: var(--danger);
+  color: var(--text-on-accent);
   border: none;
   padding: 10px 20px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 1rem;
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: #c82333;
+    background-color: var(--danger);
   }
 }
 

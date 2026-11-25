@@ -4,18 +4,20 @@ import { CompanionInfo } from '@api/chat';
 // @ts-ignore
 import styles from './ChatComponent.module.scss';
 import { useAuth } from '../../shared/auth/AuthContext';
-// @ts-ignore
-import icon_enter from '@icons/enter_icon.svg'
-// @ts-ignore
-import icon_close from '@icons/close_icon.svg'
-// @ts-ignore
-import icon_file_add from '@icons/add_file.svg'
-// @ts-ignore
-import icon_file from '@icons/file.svg'
-// @ts-ignore
-import file_download from '@icons/file_add.svg'
+import { Avatar } from '@components/ui/Avatar/Avatar';
+import {
+    ArrowDownIcon,
+    ArrowLeftIcon,
+    CheckIcon,
+    CloseIcon,
+    DoubleCheckIcon,
+    FileIcon,
+    PaperclipIcon,
+    SendIcon,
+    UploadIcon,
+} from '@components/ui/icons';
 
-import { useSSE } from "../../shared/sse/SSEComponent/SSEContext";
+import { useSSE, isUserOnline } from "../../shared/sse/SSEComponent/SSEContext";
 
 interface ChatComponentProps {
     partner: CompanionInfo | undefined;
@@ -265,7 +267,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ partner, onClose, stopCon
 
     const messages = chatState.currentChatMessages;
 
-    const isPartnerOnline = sseData.userPresence[partner.id] === 'online';
+    const isPartnerOnline = isUserOnline(sseData.userPresence, partner.id);
     const isSystemConnected = chatState.status === 'connected';
 
     const isMyMessage = (fromUserId: string) => fromUserId === userId || fromUserId === 'Me';
@@ -418,181 +420,191 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ partner, onClose, stopCon
             previousDateString = currentMessageDate;
         }
 
+        const mine = isMyMessage(msg.fromUserId);
+
         renderedMessages.push(
             <div
                 key={msg.id || index}
-                className={isMyMessage(msg.fromUserId) ? styles.messageMe : styles.messagePartner}
+                className={`${styles.messageRow} ${mine ? styles.messageRowMe : styles.messageRowPartner}`}
             >
-                {msg.files && msg.files.length > 0 && (
-                    <div className={styles.fileList}>
-                        {msg.files && msg.files.length > 0 && (
-                            <div className={styles.fileList}>
-                                {msg.files.map((file, fileIndex) => {
-                                    const isImage = file.contentType.startsWith('image/');
+                <div className={mine ? styles.messageMe : styles.messagePartner}>
+                    {msg.files && msg.files.length > 0 && (
+                        <div className={styles.fileList}>
+                            {msg.files.map((file, fileIndex) => {
+                                const isImage = file.contentType.startsWith('image/');
 
-                                    return (
-                                        <div
-                                            key={fileIndex}
-                                            className={isImage ? styles.imageItem : styles.fileItem}
-                                        >
-
-                                            <a
-                                                href={file.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                download={file.fileName}
-                                                className={isImage ? styles.imageLink : styles.fileLink}
-                                            >
-                                                {isImage ? (
-                                                    <img
-                                                        src={file.url}
-                                                        alt={file.fileName}
-                                                        className={styles.imagePreview}
-                                                    />
-                                                ) : (
-                                                    <img
-                                                        src={file_download}
-                                                        alt="Файл"
-                                                        className={styles.fileIconLarge}
-                                                    />
-                                                )}
-                                            </a>
-                                            {!isImage && (
-                                                <div className={styles.fileDetails}>
-                            <span className={styles.fileName}>
-                                {formatFileName(file.fileName)}
-                            </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                )}
-                {msg.text && <p className={styles.messageText}>{msg.text}</p>}
-
-                <span className={styles.messageTime}>
-                {msg.sentAt ?
-                    new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                    : 'Отправка...'
-                }
-                    {isMyMessage(msg.fromUserId) && (
-                        <span
-                            className={msg.isRead ? styles.readMark : styles.unreadMark}
-                            title={msg.isRead ? 'Прочитано' : 'Доставлено'}
-                        >
-                        {' ✓✓'}
-                    </span>
+                                return isImage ? (
+                                    <a
+                                        key={fileIndex}
+                                        href={file.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={styles.imageLink}
+                                    >
+                                        <img src={file.url} alt={file.fileName} className={styles.imagePreview} />
+                                    </a>
+                                ) : (
+                                    <a
+                                        key={fileIndex}
+                                        href={file.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        download={file.fileName}
+                                        className={styles.fileItem}
+                                        title={file.fileName}
+                                    >
+                                        <span className={styles.fileBadge}>
+                                            <FileIcon size={18} />
+                                        </span>
+                                        <span className={styles.fileName}>{formatFileName(file.fileName)}</span>
+                                    </a>
+                                );
+                            })}
+                        </div>
                     )}
-            </span>
+                    {msg.text && <p className={styles.messageText}>{msg.text}</p>}
+
+                    <span className={styles.messageMeta}>
+                        {msg.sentAt
+                            ? new Date(msg.sentAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+                            : 'Отправка…'}
+                        {mine && (
+                            <span
+                                className={msg.isRead ? styles.readMark : styles.unreadMark}
+                                title={msg.isRead ? 'Прочитано' : 'Доставлено'}
+                                aria-label={msg.isRead ? 'Прочитано' : 'Доставлено'}
+                            >
+                                {msg.isRead ? <DoubleCheckIcon size={15} /> : <CheckIcon size={15} />}
+                            </span>
+                        )}
+                    </span>
+                </div>
             </div>
         );
     });
 
     return (
         <div className={styles.chatContainer}>
-            <div className={styles.chatHeader}>
-                <button onClick={onClose} className={styles.backButton}>&larr; Назад</button>
-                <div className={styles.partnerInfo}>
-                    <img src={partner.photoUrl || '/default-avatar.png'} alt={partner.firstName} className={styles.partnerAvatar} />
+            <header className={styles.chatHeader}>
+                <button type="button" onClick={onClose} className={styles.backButton} aria-label="Назад к диалогам">
+                    <ArrowLeftIcon size={20} />
+                </button>
 
-                    <div className={styles.partnerDetails}>
-                        <h3>{partner.firstName} {partner.lastName}</h3>
-                        <div className={styles.partnerRoleAndStatus}>
-                            <span className={styles.partnerRole}>({getRoleDisplayName(partner.role.id)})</span>
-                            <span
-                                className={isPartnerOnline ? styles.partnerStatusOnline : styles.partnerStatusOffline}
-                            >
-                                &bull; {isPartnerOnline ? 'онлайн' : 'офлайн'}
-                            </span>
-                        </div>
+                <Avatar
+                    src={partner.photoUrl}
+                    firstName={partner.firstName}
+                    lastName={partner.lastName}
+                    size={44}
+                    online={isPartnerOnline}
+                />
+
+                <div className={styles.partnerDetails}>
+                    <h3>{partner.firstName} {partner.lastName}</h3>
+                    <div className={styles.partnerMeta}>
+                        <span className={isPartnerOnline ? styles.statusOnline : styles.statusOffline}>
+                            {isPartnerOnline ? 'в сети' : 'не в сети'}
+                        </span>
+                        <span className={styles.metaDot} aria-hidden="true">·</span>
+                        <span>{getRoleDisplayName(partner.role.id)}</span>
                     </div>
                 </div>
-                <div className={styles.chatStatus}>
-                    Соединение: <span className={isSystemConnected ? styles.statusConnected : styles.statusDisconnected}>
-                        {chatState.status}
-                    </span>
-                </div>
-            </div>
+
+                {!isSystemConnected && messages.length > 0 && (
+                    <span className={styles.connectionBadge}>Подключение…</span>
+                )}
+            </header>
 
             <div className={`${styles.messagesBox} ${isDragging ? styles.dragOver : ''}`} ref={messagesBoxRef}>
                 {isDragging && (
                     <div className={styles.dragDropOverlay}>
-                        Отпустите файлы для загрузки
+                        <UploadIcon size={28} />
+                        Отпустите файлы, чтобы прикрепить
                     </div>
                 )}
 
                 {chatState.error && <p className={styles.statusError}>Ошибка: {chatState.error}</p>}
-                {chatState.status !== 'connected' && <p className={styles.statusMessage}>Идет подключение к серверу...</p>}
-                {chatState.status === 'connected' && messages.length === 0 && chatState.activeChatUser === partner.id &&
-                    <p className={styles.statusMessage}>Начните диалог первым!</p>
-                }
+                {chatState.status !== 'connected' && messages.length === 0 && (
+                    <p className={styles.statusMessage}>Загружаем диалог…</p>
+                )}
+                {chatState.status === 'connected' && messages.length === 0 && chatState.activeChatUser === partner.id && (
+                    <div className={styles.emptyChat}>
+                        <Avatar src={partner.photoUrl} firstName={partner.firstName} lastName={partner.lastName} size={64} />
+                        <p>Сообщений пока нет</p>
+                        <span>Напишите первым — {partner.firstName} получит уведомление.</span>
+                    </div>
+                )}
                 {renderedMessages}
                 <div ref={messagesEndRef} />
             </div>
+
             {newUnseenMessagesCount > 0 && !isScrolledToBottom && (
-                <div className={styles.jumpToBottomButton} onClick={handleJumpToBottom}>
-                    <span>&#x25BC; {newUnseenMessagesCount}</span>
-                </div>
-            )}
-
-            {sendError && (
-                <div className={styles.sendErrorContainer}>
-                    <p className={styles.sendErrorMessage}>{sendError}</p>
-                </div>
-            )}
-
-            <div className={styles.filePreviewArea}>
-                {filesToSend.map((file, index) => (
-                    <div key={index} className={styles.filePreviewItem}>
-                        <img src={icon_file} alt="Файл" className={styles.filePreviewIcon} />
-                        <span className={styles.filePreviewName}>{file.name}</span>
-                        <button
-                            onClick={() => handleRemoveFile(file.name)}
-                            className={styles.fileRemoveButton}
-                        >
-                            <img src={icon_close} alt="Удалить" />
-                        </button>
-                    </div>
-                ))}
-            </div>
-
-            <div className={styles.inputArea}>
-                <input
-                    type="file"
-                    id="file-upload-input"
-                    multiple
-                    accept="*"
-                    style={{ display: 'none' }}
-                    onChange={handleFileChange}
-                />
-                <label
-                    htmlFor="file-upload-input"
-                    className={styles.fileUploadButton}
-                    title={`Добавить файл (макс. ${MAX_FILES})`}
-                >
-                    <img src={icon_file_add} alt="Добавить файл" />
-                </label>
-                <input
-                    ref={inputRef}
-                    type="text"
-                    value={inputText}
-                    onChange={(e) => {
-                        const maskedValue = maskSensitiveData(e.target.value);
-                        setInputText(maskedValue);
-                    }}
-                    onKeyPress={(e) => {
-                        if (e.key === 'Enter') handleSend();
-                    }}
-                    placeholder={isSystemConnected ? 'Введите сообщение...' : 'Подключение не установлено...'}
-                    disabled={!isSystemConnected}
-                />
-                <button onClick={handleSend} disabled={!isSystemConnected || (!inputText.trim() && filesToSend.length === 0)}>
-                    <img src={icon_enter} alt="Отправить" />
+                <button type="button" className={styles.jumpToBottomButton} onClick={handleJumpToBottom}>
+                    <ArrowDownIcon size={16} />
+                    <span>{newUnseenMessagesCount}</span>
                 </button>
-            </div>
+            )}
+
+            <footer className={styles.composer}>
+                {sendError && <p className={styles.sendErrorMessage}>{sendError}</p>}
+
+                {filesToSend.length > 0 && (
+                    <div className={styles.filePreviewArea}>
+                        {filesToSend.map((file, index) => (
+                            <div key={index} className={styles.filePreviewItem}>
+                                <FileIcon size={16} />
+                                <span className={styles.filePreviewName}>{file.name}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => handleRemoveFile(file.name)}
+                                    className={styles.fileRemoveButton}
+                                    aria-label={`Удалить файл ${file.name}`}
+                                >
+                                    <CloseIcon size={14} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                <div className={styles.inputArea}>
+                    <input
+                        type="file"
+                        id="file-upload-input"
+                        multiple
+                        hidden
+                        onChange={handleFileChange}
+                    />
+                    <label
+                        htmlFor="file-upload-input"
+                        className={styles.iconButton}
+                        title={`Прикрепить файл (до ${MAX_FILES})`}
+                        aria-label="Прикрепить файл"
+                    >
+                        <PaperclipIcon size={20} />
+                    </label>
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        className={styles.messageInput}
+                        value={inputText}
+                        onChange={(e) => setInputText(maskSensitiveData(e.target.value))}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSend();
+                        }}
+                        placeholder={isSystemConnected ? 'Напишите сообщение…' : 'Подключаемся к чату…'}
+                        disabled={!isSystemConnected}
+                    />
+                    <button
+                        type="button"
+                        className={styles.sendButton}
+                        onClick={handleSend}
+                        disabled={!isSystemConnected || (!inputText.trim() && filesToSend.length === 0)}
+                        aria-label="Отправить сообщение"
+                    >
+                        <SendIcon size={18} />
+                    </button>
+                </div>
+            </footer>
         </div>
     );
 };

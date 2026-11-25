@@ -3,7 +3,7 @@ import React from 'react';
 // @ts-ignore
 import styles from './TermsOfServicePage.module.scss';
 
-const highlighted = { fontWeight: 600, color: '#0056b3' };
+const highlighted = { fontWeight: 600, color: 'var(--accent)' };
 
 const TermsOfServicePage: React.FC = () => {
     return (
@@ -66,8 +66,8 @@ const TermsOfServicePage: React.FC = () => {
                         определяется по усмотрению Правообладателя.
                     </li>
                     <li>Чтобы получить доступ к полному функционалу Сервиса, Ученик должен пройти регистрацию.</li>
-                    <li>Для регистрации Ученик авторизируется через Telegram.</li>
-                    <li>Ученик предоставляет публичные данные Telegram.</li>
+                    <li>Для регистрации Ученик указывает адрес электронной почты и пароль.</li>
+                    <li>Ученик подтверждает адрес электронной почты кодом из письма.</li>
                     <li>После регистрации Ученик получает доступ к Личному кабинету.</li>
                     <li>Для регистрации Ученик предоставляет полную, достоверную и не нарушающую законодательство РФ
                         информацию о себе.

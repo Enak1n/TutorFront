@@ -1,501 +1,366 @@
-'use client'
-
 import type React from 'react'
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 // @ts-ignore
 import styles from './Header.module.scss'
 // @ts-ignore
 import logoImage from '@icons/book.svg'
-import { useNavigate } from 'react-router'
-import { LoginModal } from './LoginModal'
-import type { TelegramUser } from '@components/auth/TelegramLoginButton'
+import { hasPendingRegistrationVerification, LoginModal } from './LoginModal'
+import type { LoginV2Response } from '@api/auth'
 import { useSSE } from '../../../sse/SSEComponent/SSEContext'
+import { ThemeToggle } from '../../../theme/ThemeToggle'
+
+type UserRole = 'tutor' | 'student_or_parent' | 'admin'
 
 export interface HeaderProps {
 	isAuthenticated?: boolean
 	userName?: string
 	userAvatar?: string
-	userRole?: 'tutor' | 'student_or_parent' | 'admin' | null
-	onLogin?: (
-		role: 'tutor' | 'student_or_parent' | 'admin',
-		telegramData: TelegramUser,
-	) => void | Promise<void>
+	userRole?: UserRole | null
+	onLogin?: (authData: LoginV2Response) => void | Promise<void>
 	onLogout?: () => void
 }
+
+interface NavItem {
+	label: string
+	to: string
+	badge?: number
+}
+
+const ROLE_LABELS: Record<UserRole, string> = {
+	tutor: 'Репетитор',
+	student_or_parent: 'Ученик / родитель',
+	admin: 'Администратор',
+}
+
+const LANDING_SECTIONS = [
+	{ id: 'features', label: 'Возможности' },
+	{ id: 'pricing', label: 'Тарифы' },
+	{ id: 'testimonials', label: 'Отзывы' },
+	{ id: 'faq', label: 'Вопросы' },
+]
+
+const getMainNav = (role: UserRole | null, unread: number): NavItem[] => {
+	const isAdmin = role === 'admin'
+
+	return [
+		{ label: 'Расписание', to: isAdmin ? '/admin' : '/schedule' },
+		{
+			label: isAdmin ? 'Связи' : role === 'tutor' ? 'Мои ученики' : 'Мои репетиторы',
+			to: isAdmin ? '/tutor-student-link' : '/students',
+		},
+		{ label: 'Статистика', to: isAdmin ? '/all-statistic' : '/statistic' },
+		{ label: 'Сообщения', to: isAdmin ? '/all-message' : '/messages', badge: unread },
+	]
+}
+
+const getProfileNav = (role: UserRole | null): NavItem[] => [
+	{ label: 'Мой профиль', to: '/profile' },
+	...(role === 'admin'
+		? [
+				{ label: 'Пользователи', to: '/admin/users' },
+				{ label: 'Родители', to: '/admin/parent-links' },
+			]
+		: []),
+]
+
+const Avatar = ({ src, name, size = 'md' }: { src?: string; name: string; size?: 'md' | 'lg' }) => (
+	<span className={`${styles.avatar} ${size === 'lg' ? styles.avatarLg : ''}`}>
+		{src ? <img src={src} alt={name} /> : <span>{(name.trim()[0] ?? '?').toUpperCase()}</span>}
+	</span>
+)
+
+const Badge = ({ count }: { count?: number }) =>
+	count && count > 0 ? <span className={styles.badge}>{count > 99 ? '99+' : count}</span> : null
 
 export const Header: React.FC<HeaderProps> = ({
 	isAuthenticated = false,
 	userName = 'Пользователь',
 	userAvatar,
-	userRole: userRoleProp,
+	userRole = null,
 	onLogin,
 	onLogout,
 }) => {
 	const [isMenuOpen, setIsMenuOpen] = useState(false)
+	const [isProfileOpen, setIsProfileOpen] = useState(false)
 	const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-	const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
+	const [loginModalMode, setLoginModalMode] = useState<'login' | 'register'>('login')
+	const [isScrolled, setIsScrolled] = useState(false)
 
-	const [userRole, setUserRole] = useState<
-		'tutor' | 'student_or_parent' | 'admin' | null | undefined
-	>(userRoleProp)
-
-	const { sseData } = useSSE()
-	const globalNotificationCount = sseData.globalNotificationCount
-
+	const profileRef = useRef<HTMLDivElement>(null)
 	const navigate = useNavigate()
+	const location = useLocation()
+	const { sseData } = useSSE()
 
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			const target = event.target as HTMLElement
-			if (
-				isProfileDropdownOpen &&
-				!target.closest(`.${styles.profileContainer}`)
-			) {
-				setIsProfileDropdownOpen(false)
-			}
-			if (
-				isMenuOpen &&
-				!target.closest(`.${styles.menuButton}`) &&
-				!target.closest(`.${styles.dropdownMenu}`)
-			) {
-				setIsMenuOpen(false)
-			}
-		}
+	const role = (userRole ?? null) as UserRole | null
+	const displayName = userName.trim() || 'Пользователь'
+	const mainNav = getMainNav(role, sseData.globalNotificationCount)
+	const profileNav = getProfileNav(role)
 
-		if (isProfileDropdownOpen || isMenuOpen) {
-			document.addEventListener('mousedown', handleClickOutside)
-			return () => document.removeEventListener('mousedown', handleClickOutside)
-		}
-	}, [isProfileDropdownOpen, isMenuOpen])
-
-	useEffect(() => {
-		if (!userRoleProp) {
-			try {
-				const storedRole = localStorage.getItem('role') as
-					| 'tutor'
-					| 'student_or_parent'
-					| 'admin'
-					| null
-				if (storedRole) {
-					setUserRole(storedRole)
-				}
-			} catch (error) {
-				console.error('Error reading role from localStorage:', error)
-			}
-		} else {
-			setUserRole(userRoleProp)
-		}
-	}, [userRoleProp])
-
-	const toggleMenu = () => {
-		setIsProfileDropdownOpen(false)
-		setIsMenuOpen(prev => !prev)
-	}
-
-	const toggleProfileDropdown = () => {
+	const openAuth = (mode: 'login' | 'register') => {
 		setIsMenuOpen(false)
-		setIsProfileDropdownOpen(prev => !prev)
-	}
-
-	const handleLogin = () => {
-		setIsMenuOpen(false)
-		setIsProfileDropdownOpen(false)
+		setIsProfileOpen(false)
+		setLoginModalMode(mode)
 		setIsLoginModalOpen(true)
 	}
 
-	const handleLoginWithTelegram = (
-		role: 'tutor' | 'student_or_parent' | 'admin',
-		telegramData: TelegramUser,
-	) => {
+	// Закрываем меню при переходе на другую страницу.
+	useEffect(() => {
+		setIsMenuOpen(false)
+		setIsProfileOpen(false)
+	}, [location.pathname])
+
+	useEffect(() => {
+		const onScroll = () => setIsScrolled(window.scrollY > 4)
+		onScroll()
+		window.addEventListener('scroll', onScroll, { passive: true })
+		return () => window.removeEventListener('scroll', onScroll)
+	}, [])
+
+	useEffect(() => {
+		if (!isProfileOpen) return
+
+		const onPointerDown = (event: MouseEvent) => {
+			if (!profileRef.current?.contains(event.target as Node)) setIsProfileOpen(false)
+		}
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.key === 'Escape') setIsProfileOpen(false)
+		}
+
+		document.addEventListener('mousedown', onPointerDown)
+		document.addEventListener('keydown', onKeyDown)
+		return () => {
+			document.removeEventListener('mousedown', onPointerDown)
+			document.removeEventListener('keydown', onKeyDown)
+		}
+	}, [isProfileOpen])
+
+	useEffect(() => {
+		document.body.style.overflow = isMenuOpen ? 'hidden' : ''
+		return () => {
+			document.body.style.overflow = ''
+		}
+	}, [isMenuOpen])
+
+	useEffect(() => {
+		if (!isAuthenticated && hasPendingRegistrationVerification()) {
+			openAuth('register')
+		}
+	}, [isAuthenticated])
+
+	useEffect(() => {
+		const handleOpenAuthModal = (event: Event) => {
+			const mode = (event as CustomEvent<{ mode?: 'login' | 'register' }>).detail?.mode ?? 'login'
+			openAuth(mode)
+		}
+
+		window.addEventListener('openAuthModal', handleOpenAuthModal)
+		return () => window.removeEventListener('openAuthModal', handleOpenAuthModal)
+	}, [])
+
+	const handleLoginSuccess = (authData: LoginV2Response) => {
 		setIsLoginModalOpen(false)
-		onLogin?.(role, telegramData)
+		return onLogin?.(authData)
 	}
 
 	const handleLogout = () => {
 		setIsMenuOpen(false)
-		setIsProfileDropdownOpen(false)
+		setIsProfileOpen(false)
 		onLogout?.()
 	}
 
-	const handleLogoClick = () => {
-		navigate('/')
-	}
-
 	const scrollToSection = (sectionId: string) => {
-		const element = document.getElementById(sectionId)
-		if (element) {
-			element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-		}
 		setIsMenuOpen(false)
+		if (location.pathname !== '/') {
+			navigate('/')
+			setTimeout(() => document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' }), 100)
+			return
+		}
+		document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 	}
 
-	const navigateToPage = (path: string) => {
-		navigate(path)
-		setIsMenuOpen(false)
-		setIsProfileDropdownOpen(false)
-	}
-	const getRoleLabel = () => {
-		if (userRole === 'tutor') return 'Репетитор'
-		if (userRole === 'student_or_parent') return 'Ученик/Родитель'
-		if (userRole === 'admin') return 'Администратор'
-		return ''
-	}
+	const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+		`${styles.navLink} ${isActive ? styles.navLinkActive : ''}`
+
+	const drawerLinkClass = ({ isActive }: { isActive: boolean }) =>
+		`${styles.drawerLink} ${isActive ? styles.drawerLinkActive : ''}`
 
 	return (
-		<header className={styles.header}>
-			<div className={styles.container}>
-				<div className={styles.leftSection}>
-					<div className={styles.logo} onClick={handleLogoClick}>
-						<img
-							src={logoImage || '/placeholder.svg'}
-							alt='Уголок репетитора'
-						/>
-					</div>
-					<nav className={styles.nav}>
-						<button onClick={handleLogoClick} className={styles.navLink}>
-							Уголок репетитора
-						</button>
+		<>
+			<header className={`${styles.header} ${isScrolled ? styles.headerScrolled : ''}`}>
+				<div className={styles.container}>
+					<button type='button' className={styles.brand} onClick={() => navigate('/')}>
+						<span className={styles.brandMark}>
+							<img src={logoImage} alt='' />
+						</span>
+						<span className={styles.brandName}>Уголок репетитора</span>
+					</button>
+
+					<nav className={styles.nav} aria-label='Основная навигация'>
+						{isAuthenticated
+							? mainNav.map(item => (
+									<NavLink key={item.to} to={item.to} end={item.to === '/admin'} className={navLinkClass}>
+										{item.label}
+										<Badge count={item.badge} />
+									</NavLink>
+								))
+							: LANDING_SECTIONS.map(section => (
+									<button
+										key={section.id}
+										type='button'
+										className={styles.navLink}
+										onClick={() => scrollToSection(section.id)}
+									>
+										{section.label}
+									</button>
+								))}
 					</nav>
-				</div>
 
-				<nav className={styles.centerNav}>
-					{isAuthenticated ? (
-						<>
-							<button
-								onClick={() =>
-									navigateToPage(userRole === 'admin' ? '/admin' : '/schedule')
-								}
-								className={styles.centerNavLink}
-							>
-								Расписание
-							</button>
-							<button
-								onClick={() =>
-									navigateToPage(
-										userRole === 'admin' ? '/tutor-student-link' : '/students',
-									)
-								}
-								className={styles.centerNavLink}
-							>
-								{userRole === 'tutor'
-									? 'Мои ученики'
-									: userRole === 'admin'
-										? 'Связи'
-										: 'Мои репетиторы'}
-							</button>
-							<button
-								onClick={() =>
-									navigateToPage(
-										userRole === 'admin' ? '/all-statistic' : '/statistic',
-									)
-								}
-								className={styles.centerNavLink}
-							>
-								Статистика
-							</button>
-							<button
-								onClick={() =>
-									navigateToPage(
-										userRole === 'admin' ? '/all-message' : '/messages',
-									)
-								}
-								className={`${styles.centerNavLink} ${styles.notificationButton}`}
-							>
-								Сообщения
-								{globalNotificationCount > 0 && (
-									<span className={styles.notificationBadge}>
-										{globalNotificationCount}
-									</span>
-								)}
-							</button>
-						</>
-					) : (
-						<>
-							<button
-								onClick={() => scrollToSection('features')}
-								className={styles.centerNavLink}
-							>
-								Возможности
-							</button>
-							<button
-								onClick={() => scrollToSection('pricing')}
-								className={styles.centerNavLink}
-							>
-								Тарифы
-							</button>
-							<button
-								onClick={() => scrollToSection('testimonials')}
-								className={styles.centerNavLink}
-							>
-								Отзывы
-							</button>
-							<button
-								onClick={() => scrollToSection('faq')}
-								className={styles.centerNavLink}
-							>
-								Вопросы
-							</button>
-						</>
-					)}
-				</nav>
+					<div className={styles.actions}>
+						<ThemeToggle />
 
-				<button
-					className={styles.menuButton}
-					onClick={toggleMenu}
-					aria-label='Меню'
-					aria-expanded={isMenuOpen}
-				>
-					<span className={styles.menuIcon}></span>
-					<span className={styles.menuIcon}></span>
-					<span className={styles.menuIcon}></span>
-				</button>
+						{isAuthenticated ? (
+							<div className={styles.profile} ref={profileRef}>
+								<button
+									type='button'
+									className={styles.profileTrigger}
+									onClick={() => setIsProfileOpen(open => !open)}
+									aria-expanded={isProfileOpen}
+									aria-haspopup='menu'
+									aria-label='Меню профиля'
+								>
+									<Avatar src={userAvatar} name={displayName} />
+								</button>
 
-				<div className={styles.rightSection}>
-					{isAuthenticated ? (
-						<div className={styles.profileContainer}>
-							<div
-								className={styles.userAvatar}
-								onClick={toggleProfileDropdown}
-								role='button'
-								tabIndex={0}
-								aria-expanded={isProfileDropdownOpen}
-								aria-label='Меню профиля'
-							>
-								{userAvatar ? (
-									<img
-										src={userAvatar || '/placeholder.svg'}
-										alt='User Avatar'
-									/>
-								) : (
-									<div className={styles.avatarPlaceholder}>
-										{userName.charAt(0).toUpperCase()}
+								{isProfileOpen && (
+									<div className={styles.profileMenu} role='menu'>
+										<div className={styles.profileHeader}>
+											<Avatar src={userAvatar} name={displayName} size='lg' />
+											<div className={styles.profileText}>
+												<span className={styles.profileName}>{displayName}</span>
+												{role && <span className={styles.profileRole}>{ROLE_LABELS[role]}</span>}
+											</div>
+										</div>
+
+										<div className={styles.menuDivider} />
+
+										{profileNav.map(item => (
+											<NavLink key={item.to} to={item.to} className={styles.menuItem} role='menuitem'>
+												{item.label}
+											</NavLink>
+										))}
+
+										<div className={styles.menuDivider} />
+
+										<button
+											type='button'
+											className={`${styles.menuItem} ${styles.menuItemDanger}`}
+											onClick={handleLogout}
+											role='menuitem'
+										>
+											Выйти
+										</button>
 									</div>
 								)}
 							</div>
+						) : (
+							<div className={styles.authButtons}>
+								<button type='button' className={styles.ghostButton} onClick={() => openAuth('login')}>
+									Войти
+								</button>
+								<button type='button' className={styles.primaryButton} onClick={() => openAuth('register')}>
+									Регистрация
+								</button>
+							</div>
+						)}
 
-							{isProfileDropdownOpen && (
-								<div className={styles.profileDropdown}>
-									<div className={styles.userInfoMenu}>
-										<div className={styles.userAvatar}>
-											{userAvatar ? (
-												<img
-													src={userAvatar || '/placeholder.svg'}
-													alt={userName}
-												/>
-											) : (
-												<div className={styles.avatarPlaceholder}>
-													{userName.charAt(0).toUpperCase()}
-												</div>
-											)}
-										</div>
-										<span className={styles.userName}>
-											{userName} ({getRoleLabel()})
-										</span>
-									</div>
-
-									<div className={styles.menuDividerBlue} />
-
-									<button
-										onClick={() => navigateToPage('/profile')}
-										className={styles.mobileNavLink}
-									>
-										Мой профиль
-									</button>
-									{userRole === 'admin' && (
-										<>
-											<button
-												onClick={() => navigateToPage('/admin/users')}
-												className={styles.mobileNavLink}
-											>
-												Пользователи
-											</button>
-											<button
-												onClick={() => navigateToPage('/admin/parent-links')}
-												className={styles.mobileNavLink}
-											>
-												Родители
-											</button>
-										</>
-									)}
-									<div className={styles.menuDivider} />
-
-									<button
-										onClick={handleLogout}
-										className={styles.dropdownLogoutButton}
-									>
-										Выйти
-									</button>
-								</div>
-							)}
-						</div>
-					) : (
-						<button className={styles.loginButton} onClick={handleLogin}>
-							Войти
+						<button
+							type='button'
+							className={`${styles.burger} ${isMenuOpen ? styles.burgerOpen : ''}`}
+							onClick={() => setIsMenuOpen(open => !open)}
+							aria-label={isMenuOpen ? 'Закрыть меню' : 'Открыть меню'}
+							aria-expanded={isMenuOpen}
+						>
+							<span />
+							<span />
+							<span />
 						</button>
-					)}
-				</div>
-			</div>
-
-			{isMenuOpen && (
-				<>
-					<div className={styles.overlay} onClick={toggleMenu} />
-
-					<div className={styles.dropdownMenu}>
-						<nav className={styles.mobileNav}>
-							{isAuthenticated ? (
-								<>
-									<div className={styles.userInfoMenu}>
-										<div className={styles.userAvatar}>
-											{userAvatar ? (
-												<img
-													src={userAvatar || '/placeholder.svg'}
-													alt={userName}
-												/>
-											) : (
-												<div className={styles.avatarPlaceholder}>
-													{userName.charAt(0).toUpperCase()}
-												</div>
-											)}
-										</div>
-										<span className={styles.userName}>
-											{userName} ({getRoleLabel()})
-										</span>
-									</div>
-
-									<div className={styles.menuDividerBlue} />
-
-									<button
-										onClick={() =>
-											navigateToPage(
-												userRole === 'admin' ? '/admin' : '/schedule',
-											)
-										}
-										className={styles.mobileNavLink}
-									>
-										Расписание
-									</button>
-									<button
-										onClick={() =>
-											navigateToPage(
-												userRole === 'admin'
-													? '/tutor-student-link'
-													: '/students',
-											)
-										}
-										className={styles.mobileNavLink}
-									>
-										{userRole === 'tutor'
-											? 'Мои ученики'
-											: userRole === 'admin'
-												? 'Связи'
-												: 'Мои репетиторы'}
-									</button>
-									<button
-										onClick={() =>
-											navigateToPage(
-												userRole === 'admin' ? '/all-statistic' : '/statistic',
-											)
-										}
-										className={styles.mobileNavLink}
-									>
-										Статистика
-									</button>
-									<button
-										onClick={() =>
-											navigateToPage(
-												userRole === 'admin' ? '/all-message' : '/messages',
-											)
-										}
-										className={`${styles.mobileNavLink} ${styles.mobileNotificationButton}`}
-									>
-										Сообщения
-										{globalNotificationCount > 0 && (
-											<span className={styles.mobileNotificationBadge}>
-												{globalNotificationCount}
-											</span>
-										)}
-									</button>
-
-									<div className={styles.menuDivider} />
-
-									<button
-										onClick={() => navigateToPage('/profile')}
-										className={styles.mobileNavLink}
-									>
-										Мой профиль
-									</button>
-									{userRole === 'admin' && (
-										<>
-											<button
-												onClick={() => navigateToPage('/admin/users')}
-												className={styles.mobileNavLink}
-											>
-												Пользователи
-											</button>
-											<button
-												onClick={() => navigateToPage('/admin/parent-links')}
-												className={styles.mobileNavLink}
-											>
-												Родители
-											</button>
-										</>
-									)}
-
-									{/* Кнопка Выйти */}
-									<button
-										className={styles.logoutButton}
-										onClick={handleLogout}
-									>
-										Выйти
-									</button>
-								</>
-							) : (
-								<>
-									<button
-										className={styles.loginMenuItem}
-										onClick={handleLogin}
-									>
-										Войти
-									</button>
-
-									<div className={styles.menuDividerBlue} />
-
-									<button
-										onClick={() => scrollToSection('features')}
-										className={styles.mobileNavLink}
-									>
-										Возможности
-									</button>
-									<button
-										onClick={() => scrollToSection('pricing')}
-										className={styles.mobileNavLink}
-									>
-										Тарифы
-									</button>
-									<button
-										onClick={() => scrollToSection('testimonials')}
-										className={styles.mobileNavLink}
-									>
-										Отзывы
-									</button>
-									<button
-										onClick={() => scrollToSection('faq')}
-										className={styles.mobileNavLink}
-									>
-										Вопросы
-									</button>
-								</>
-							)}
-						</nav>
 					</div>
-				</>
-			)}
+				</div>
+			</header>
+
+			{/* Вне <header>: у шапки есть backdrop-filter, и fixed-элементы внутри неё обрезались бы её размерами. */}
+			<div
+				className={`${styles.drawerOverlay} ${isMenuOpen ? styles.drawerOverlayVisible : ''}`}
+				onClick={() => setIsMenuOpen(false)}
+				aria-hidden='true'
+			/>
+
+			<aside className={`${styles.drawer} ${isMenuOpen ? styles.drawerOpen : ''}`} aria-hidden={!isMenuOpen}>
+				{isAuthenticated ? (
+					<>
+						<div className={styles.drawerUser}>
+							<Avatar src={userAvatar} name={displayName} size='lg' />
+							<div className={styles.profileText}>
+								<span className={styles.profileName}>{displayName}</span>
+								{role && <span className={styles.profileRole}>{ROLE_LABELS[role]}</span>}
+							</div>
+						</div>
+
+						<nav className={styles.drawerNav}>
+							{mainNav.map(item => (
+								<NavLink key={item.to} to={item.to} end={item.to === '/admin'} className={drawerLinkClass}>
+									{item.label}
+									<Badge count={item.badge} />
+								</NavLink>
+							))}
+
+							<div className={styles.menuDivider} />
+
+							{profileNav.map(item => (
+								<NavLink key={item.to} to={item.to} className={drawerLinkClass}>
+									{item.label}
+								</NavLink>
+							))}
+						</nav>
+
+						<button type='button' className={styles.drawerLogout} onClick={handleLogout}>
+							Выйти
+						</button>
+					</>
+				) : (
+					<>
+						<div className={styles.drawerAuth}>
+							<button type='button' className={styles.primaryButton} onClick={() => openAuth('register')}>
+								Регистрация
+							</button>
+							<button type='button' className={styles.ghostButton} onClick={() => openAuth('login')}>
+								Войти
+							</button>
+						</div>
+
+						<nav className={styles.drawerNav}>
+							{LANDING_SECTIONS.map(section => (
+								<button
+									key={section.id}
+									type='button'
+									className={styles.drawerLink}
+									onClick={() => scrollToSection(section.id)}
+								>
+									{section.label}
+								</button>
+							))}
+						</nav>
+					</>
+				)}
+			</aside>
 
 			<LoginModal
 				isOpen={isLoginModalOpen}
 				onClose={() => setIsLoginModalOpen(false)}
-				onLogin={handleLoginWithTelegram}
+				onLogin={handleLoginSuccess}
+				initialMode={loginModalMode}
 			/>
-		</header>
+		</>
 	)
 }

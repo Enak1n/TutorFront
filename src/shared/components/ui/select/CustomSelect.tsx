@@ -1,5 +1,6 @@
 import React from 'react';
-import Select, { ActionMeta, SingleValue, StylesConfig } from 'react-select';
+import Select, { ActionMeta, SingleValue } from 'react-select';
+import { themedSelectStyles } from './selectStyles';
 import makeAnimated from 'react-select/animated';
 
 export interface SelectOption {
@@ -22,39 +23,7 @@ interface CustomSelectProps {
     required?: boolean;
 }
 
-const selectCustomStyles: StylesConfig<SelectOption, false> = {
-    menuPortal: (base) => ({
-        ...base,
-        zIndex: 2000
-    }),
-    menu: (provided) => ({
-        ...provided,
-        position: 'absolute' as 'absolute',
-        zIndex: 2000,
-    }),
-    control: (provided, state) => ({
-        ...provided,
-        minHeight: '40px',
-        borderRadius: '8px',
-        border: `1px solid ${state.isFocused ? '#0066ff' : '#ccc'}`,
-        boxShadow: state.isFocused ? '0 0 0 1px #0066ff' : 'none',
-        '&:hover': {
-            borderColor: '#0066ff',
-        }
-    }),
-    option: (provided, state) => ({
-        ...provided,
-        backgroundColor: state.isFocused ? 'rgba(0, 102, 255, 0.1)' : 'white',
-        color: '#1a1a1a',
-        cursor: 'pointer',
-        padding: '12px 20px',
-        transition: 'background-color 0.2s',
-    }),
-    indicatorSeparator: (provided) => ({
-        ...provided,
-        backgroundColor: '#ddd',
-    }),
-};
+const selectCustomStyles = themedSelectStyles<SelectOption>();
 
 const animatedComponents = makeAnimated();
 

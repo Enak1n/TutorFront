@@ -27,8 +27,5 @@ export const ProtectedRoute = ({
 		return <Navigate to='/schedule' replace />
 	}
 
-	// ✅ Все проверки пройдены.
-	// Если migration_pending === true, пользователь всё равно попадёт сюда,
-	// но модалка будет висеть поверх и блокировать взаимодействие.
 	return <>{children}</>
 }

@@ -1,0 +1,46 @@
+.avatar {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  user-select: none;
+
+  img {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+  }
+}
+
+// Мягкие тона для аватаров без фото
+.tone0 { background: var(--accent-soft); color: var(--accent); }
+.tone1 { background: var(--success-soft); color: var(--success); }
+.tone2 { background: var(--warning-soft); color: var(--warning-hover); }
+.tone3 { background: var(--danger-soft); color: var(--danger); }
+.tone4 { background: color-mix(in srgb, #8b5cf6 16%, var(--surface)); color: color-mix(in srgb, #8b5cf6 80%, var(--text)); }
+.tone5 { background: color-mix(in srgb, #14b8a6 16%, var(--surface)); color: color-mix(in srgb, #14b8a6 80%, var(--text)); }
+
+.status {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 28%;
+  height: 28%;
+  min-width: 10px;
+  min-height: 10px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--surface);
+  transition: background-color var(--transition);
+}
+
+.statusOnline {
+  background: var(--online);
+}
+
+.statusOffline {
+  background: var(--border-strong);
+}

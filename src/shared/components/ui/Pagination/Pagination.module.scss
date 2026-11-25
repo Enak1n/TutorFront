@@ -9,10 +9,10 @@
 
 .pagination button {
   padding: 8px 15px;
-  border: 1px solid #007bff;
-  border-radius: 6px;
-  background-color: #ffffff;
-  color: #007bff;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background-color: var(--surface);
+  color: var(--accent);
   cursor: pointer;
   transition: background-color 0.2s, color 0.2s, transform 0.2s;
   font-size: 0.9rem;
@@ -30,24 +30,24 @@
 }
 
 .pagination button:hover:not(:disabled) {
-  background-color: #f0f8ff;
+  background-color: var(--surface-2);
   transform: translateY(-1px);
 }
 
 .pagination button.activePage {
-  background-color: #007bff;
-  color: #ffffff;
+  background-color: var(--accent);
+  color: var(--text-on-accent);
   font-weight: bold;
 }
 
 .pagination button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
-  background-color: #f8f8f8;
+  background-color: var(--surface-2);
 }
 
 .dots {
   padding: 8px 5px;
-  color: #6c757d;
+  color: var(--text-muted);
   font-size: 0.9rem;
 }
