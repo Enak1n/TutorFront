@@ -116,7 +116,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const setupConnectionHandlers = useCallback((connectionToStart: signalR.HubConnection) => {
         connectionToStart.on(
             'ReceiveMessage',
-            (msg: { messageId: string, fromUserId: string; text: string | null; sentAt: string, files: ChatFile[] | null }) => {
+            (msg: { messageId: string, fromUserId: string; text: string | null; sentAt: string, files: ChatFile[] | null, sentByAdminId?: string | null }) => {
                 const fromUserId = msg.fromUserId;
                 console.log(`[Chat] Отправленное сообщение ${fromUserId}. Message object:`, msg);
 
@@ -144,6 +144,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         text: msg.text || '',
                         sentAt: msg.sentAt,
                         isRead: shouldAddToCurrentChat && !isSelfSentConfirmation,
+                        sentByAdminId: msg.sentByAdminId ?? null,
                         files: msg.files?.map(f => ({
                             ...f,
                             url: f.url ? getFullUrl(f.url) : f.url
@@ -175,6 +176,30 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     }
 
                     return newState;
+                });
+            }
+        );
+
+        // Администратор написал в чат от своего имени — показываем, если открыт именно этот диалог.
+        connectionToStart.on(
+            'ReceiveAdminMessage',
+            (msg: { messageId: string; fromUserId: string; withUserId: string; text: string | null; sentAt: string; files: ChatFile[] | null }) => {
+                setState(prev => {
+                    if (prev.activeChatUser?.toLowerCase() !== msg.withUserId.toLowerCase()) return prev;
+                    if (prev.currentChatMessages.some(m => m.id === msg.messageId)) return prev;
+
+                    const adminMessage: ChatMessage = {
+                        id: msg.messageId,
+                        fromUserId: msg.fromUserId,
+                        toUserId: '',
+                        text: msg.text,
+                        sentAt: msg.sentAt,
+                        isRead: true,
+                        isAdminMessage: true,
+                        files: msg.files?.map(f => ({ ...f, url: f.url ? getFullUrl(f.url) : f.url })) ?? null,
+                    };
+
+                    return { ...prev, currentChatMessages: [...prev.currentChatMessages, adminMessage] };
                 });
             }
         );

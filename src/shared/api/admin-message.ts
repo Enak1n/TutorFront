@@ -1,5 +1,6 @@
 import {apiClient} from './apiClient';
 import { ChatMessage } from '../chat/chatTypes'
+import type { StoredFile } from './files'
 
 export interface UserRole {
     id: 'student_or_parent' | 'tutor' | 'admin' | string;
@@ -87,4 +88,17 @@ export const deleteChatMessage = async (params: DeleteChatMessageParams): Promis
     await apiClient.delete(
         `/administration/chat?${queryParams}`
     );
+};
+
+export interface AdminSendMessageParams {
+    chatId: string;
+    /** null — от имени администратора, иначе — от имени участника чата. */
+    asUserId: string | null;
+    text: string | null;
+    files?: StoredFile[];
+}
+
+export const sendAdminMessage = async (params: AdminSendMessageParams): Promise<ChatMessage> => {
+    const response = await apiClient.post<ChatMessage>('/administration/chat/message', params);
+    return response.data;
 };

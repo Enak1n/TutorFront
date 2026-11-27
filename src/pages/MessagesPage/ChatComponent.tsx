@@ -420,6 +420,26 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ partner, onClose, stopCon
             previousDateString = currentMessageDate;
         }
 
+        if (msg.isAdminMessage) {
+            renderedMessages.push(
+                <div key={msg.id || index} className={styles.adminMessageRow}>
+                    <div className={styles.adminMessage}>
+                        <span className={styles.adminMessageLabel}>Администратор</span>
+                        {msg.files?.map((file, fileIndex) => (
+                            <a key={fileIndex} href={file.url} target="_blank" rel="noopener noreferrer" className={styles.adminMessageFile}>
+                                {formatFileName(file.fileName)}
+                            </a>
+                        ))}
+                        {msg.text && <p className={styles.messageText}>{msg.text}</p>}
+                        <span className={styles.messageMeta}>
+                            {new Date(msg.sentAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                    </div>
+                </div>
+            );
+            return;
+        }
+
         const mine = isMyMessage(msg.fromUserId);
 
         renderedMessages.push(
@@ -463,6 +483,10 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ partner, onClose, stopCon
                         </div>
                     )}
                     {msg.text && <p className={styles.messageText}>{msg.text}</p>}
+
+                    {msg.sentByAdminId && (
+                        <span className={styles.viaAdmin}>отправлено администратором</span>
+                    )}
 
                     <span className={styles.messageMeta}>
                         {msg.sentAt

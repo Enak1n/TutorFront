@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { fetchMyChats, type ChatPreview } from '@api/chat';
+import { fetchMyChats, getSupportChat, type ChatPreview } from '@api/chat';
 import { useChat } from '../../shared/chat/useChat';
 import { useAuth } from '../../shared/auth/AuthContext';
 import { useSSE, isUserOnline } from '../../shared/sse/SSEComponent/SSEContext';
@@ -100,6 +100,20 @@ const MessagesPage: React.FC = () => {
 
     const openChat = useCallback((chatId: string) => navigate(`/messages/${chatId}`), [navigate]);
     const closeChat = useCallback(() => navigate('/messages'), [navigate]);
+
+    const [isOpeningSupport, setIsOpeningSupport] = useState(false);
+    const openSupport = useCallback(async () => {
+        setIsOpeningSupport(true);
+        try {
+            const { chatId } = await getSupportChat();
+            await loadChats();
+            navigate(`/messages/${chatId}`);
+        } catch (err: any) {
+            setError(err?.response?.data?.errorMessage || 'Не удалось открыть чат поддержки');
+        } finally {
+            setIsOpeningSupport(false);
+        }
+    }, [loadChats, navigate]);
 
     const hasActiveChat = Boolean(activeChatId);
 
@@ -229,7 +243,18 @@ const MessagesPage: React.FC = () => {
         <div className={`${styles.page} ${hasActiveChat ? styles.pageChatOpen : ''}`}>
             <aside className={styles.sidebar} aria-label='Диалоги'>
                 <div className={styles.sidebarHeader}>
-                    <h1 className={styles.title}>Сообщения</h1>
+                    <div className={styles.titleRow}>
+                        <h1 className={styles.title}>Сообщения</h1>
+                        <button
+                            type='button'
+                            className={styles.supportButton}
+                            onClick={openSupport}
+                            disabled={isOpeningSupport}
+                            title='Написать администратору'
+                        >
+                            Поддержка
+                        </button>
+                    </div>
                     <label className={styles.search}>
                         <SearchIcon size={18} />
                         <input

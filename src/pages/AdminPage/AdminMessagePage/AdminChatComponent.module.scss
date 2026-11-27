@@ -332,3 +332,206 @@ $border-color: var(--border);
     }
   }
 }
+// --- Сообщения администратора и форма отправки ---
+.adminMessageRow {
+  display: flex;
+  justify-content: center;
+  margin: 6px 0 14px;
+}
+
+.adminMessage {
+  position: relative;
+  max-width: min(560px, 90%);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 40px 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--warning-soft);
+  border: 1px solid var(--warning-border);
+
+  .messageText {
+    margin: 0;
+    word-wrap: break-word;
+  }
+
+  .messageTime {
+    align-self: flex-end;
+    font-size: 0.75em;
+    color: var(--text-muted);
+  }
+
+  &:hover .adminDelete {
+    opacity: 1;
+  }
+}
+
+.adminMessageLabel {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--warning-hover);
+}
+
+.adminFile {
+  font-size: var(--text-sm);
+  color: var(--accent);
+  word-break: break-all;
+}
+
+.adminDelete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 3px;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+
+  img {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.viaAdmin {
+  margin-left: 6px;
+  font-size: 0.7em;
+  font-style: italic;
+  color: var(--warning-hover);
+}
+
+.composer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 15px;
+  border-top: 1px solid $border-color;
+  background: var(--surface);
+}
+
+.composerTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+.sendAsLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.sendAsSelect {
+  height: 34px;
+  max-width: 100%;
+  padding: 0 10px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-weight: 500;
+}
+
+.sendAsHint {
+  font-size: var(--text-xs);
+  color: var(--text-subtle);
+}
+
+.draftFiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.draftFile {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: var(--text-xs);
+
+  button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    color: var(--text-muted);
+  }
+}
+
+.composerRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.attachButton {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  cursor: pointer;
+
+  img {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.composerInput {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  max-height: 160px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  resize: vertical;
+
+  &:focus {
+    outline: none;
+    box-shadow: var(--focus-ring);
+    border-color: var(--accent);
+  }
+}
+
+.sendButton {
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}

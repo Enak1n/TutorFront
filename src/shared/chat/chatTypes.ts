@@ -8,6 +8,10 @@ export interface ChatMessage {
     sentAt: string;
     isRead: boolean;
     files: ChatFile[] | null;
+    /** Сообщение отправил администратор от имени fromUserId. */
+    sentByAdminId?: string | null;
+    /** Сообщение администратора, видно обоим участникам чата. */
+    isAdminMessage?: boolean;
 }
 
 export interface ChatFile {

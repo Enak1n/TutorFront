@@ -20,6 +20,9 @@ import { ParentStudentLinkPage } from '@pages/AdminPage/ParentStudentLinkPage'
 import UserProfilePage from '@pages/UserProfilePage/UserProfilePage'
 import { PersonStatisticPage } from '@pages/PersonStatisticPage/PersonStatisticPage'
 import { TutorStudentLinkPage } from '../pages/AdminPage/TutorStudentLinkPage'
+import SubscriptionPage from '@pages/SubscriptionPage/SubscriptionPage'
+import NotificationSettingsPage from '@pages/NotificationSettingsPage/NotificationSettingsPage'
+import HomeworkPage from '@pages/HomeworkPage/HomeworkPage'
 import {
 	AuthUnauthorizedError,
 	getUserInfo,
@@ -128,6 +131,34 @@ const AppContent = ({
 			element: (
 				<ProtectedRoute isAuthenticated={isAuthenticated} userRole={userRole}>
 					<UserProfilePage />
+				</ProtectedRoute>
+			),
+		},
+		{
+			path: '/homework',
+			element: (
+				<ProtectedRoute
+					isAuthenticated={isAuthenticated}
+					userRole={userRole}
+					allowedRoles={['tutor', 'student_or_parent']}
+				>
+					<HomeworkPage />
+				</ProtectedRoute>
+			),
+		},
+		{
+			path: '/subscription',
+			element: (
+				<ProtectedRoute isAuthenticated={isAuthenticated} userRole={userRole} allowedRoles={['tutor']}>
+					<SubscriptionPage />
+				</ProtectedRoute>
+			),
+		},
+		{
+			path: '/notification-settings',
+			element: (
+				<ProtectedRoute isAuthenticated={isAuthenticated} userRole={userRole} allowedRoles={['tutor']}>
+					<NotificationSettingsPage />
 				</ProtectedRoute>
 			),
 		},

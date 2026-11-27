@@ -101,7 +101,7 @@ const LandingPage = () => {
 					<div className={styles.pricingGrid}>
 						<div className={styles.pricingCard}>
 							<div className={styles.pricingIcon}>💡</div>
-							<h3 className={styles.pricingTitle}>Тариф "Старт"</h3>
+							<h3 className={styles.pricingTitle}>Тариф "Стандарт"</h3>
 							<p className={styles.pricingSubtitle}>
 								Для репетиторов, которые хотят навести порядок в работе и
 								избавиться от хаоса в таблицах.
@@ -111,37 +111,35 @@ const LandingPage = () => {
 								<h4>Что включено:</h4>
 								<ul>
 									<li>✓ Хранить список учеников в одном месте</li>
-									<li>✓ Создавать простое расписание</li>
+									<li>✓ Создавать расписание и окна для записи</li>
 									<li>✓ Отмечать посещения и оплаты</li>
-									<li>✓ Получать напоминания о занятиях</li>
-									<li>✓ Следить за выполнением домашних заданий</li>
+									<li>✓ Чаты с учениками и родителями</li>
+									<li>✓ Стандартные напоминания в VK</li>
 								</ul>
 							</div>
 							<p className={styles.pricingCta}>
-								👉 Начните с базового функционала — без ограничений и сложностей
+								👉 Начните с базового функционала — без ограничений по времени
 							</p>
 						</div>
 						<div className={styles.pricingCard}>
 							<div className={styles.pricingIcon}>💼</div>
-							<h3 className={styles.pricingTitle}>
-								Тариф "Расширенные возможности"
-							</h3>
+							<h3 className={styles.pricingTitle}>Тариф "Pro"</h3>
 							<p className={styles.pricingSubtitle}>
-								Для онлайн-школ и мини-студий, где работает несколько
-								преподавателей.
+								Для репетиторов, которые хотят автоматизировать напоминания и
+								вести домашние задания на платформе.
 							</p>
-							<div className={styles.pricingPrice}>По запросу</div>
+							<div className={styles.pricingPrice}>от 374 ₽/мес</div>
 							<div className={styles.pricingFeatures}>
-								<h4>Что включено:</h4>
+								<h4>Всё из «Стандарта», плюс:</h4>
 								<ul>
-									<li>✓ Управление несколькими аккаунтами</li>
-									<li>✓ Общие отчёты и расписания</li>
-									<li>✓ Финансовая аналитика по преподавателям</li>
-									<li>✓ Поддержка команды</li>
+									<li>✓ Свои уведомления для учеников: тексты, время, получатели</li>
+									<li>✓ Уведомления в VK, на email и по SMS</li>
+									<li>✓ Раздел «Домашние задания»: выдача, сдача, проверка</li>
+									<li>✓ Личная библиотека готовых материалов</li>
 								</ul>
 							</div>
 							<p className={styles.pricingCta}>
-								👉 Полный контроль над обучением и бизнесом
+								👉 490 ₽ в месяц или 4 490 ₽ за год
 							</p>
 						</div>
 					</div>

@@ -1,5 +1,7 @@
 import React, {useState, useEffect, useRef, useCallback} from 'react';
-import { fetchAdminChatHistory, UserInfo, deleteChatMessage } from '@api/admin-message';
+import { fetchAdminChatHistory, UserInfo, deleteChatMessage, sendAdminMessage } from '@api/admin-message';
+import { uploadFiles, getApiErrorMessage } from '@api/files';
+import { useAuth } from '@auth/AuthContext';
 import { ChatMessage } from '../../../shared/chat/chatTypes';
 import { useAlert } from '@components/ui/alert/AlertContext';
 import { toApiUrl } from '@/shared/config/api';
@@ -33,6 +35,42 @@ const AdminChatComponent: React.FC<AdminChatProps> = ({ chatId, firstUser, secon
     const [hasMore, setHasMore] = useState(true);
 
     const scrollPositionRef = useRef<{ height: number; top: number }>({ height: 0, top: 0 });
+
+    // --- Отправка сообщений администратором ---
+    const { userId: adminId } = useAuth();
+    const adminIsParticipant = firstUser.id === adminId || secondUser.id === adminId;
+    const [sendAs, setSendAs] = useState<string>('admin');
+    const [draft, setDraft] = useState('');
+    const [draftFiles, setDraftFiles] = useState<File[]>([]);
+    const [isSending, setIsSending] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const userLabel = (user: UserInfo) =>
+        [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Без имени';
+
+    const handleSend = async () => {
+        const text = draft.trim();
+        if ((!text && draftFiles.length === 0) || isSending) return;
+
+        setIsSending(true);
+        try {
+            const files = draftFiles.length > 0 ? await uploadFiles(draftFiles) : [];
+            const message = await sendAdminMessage({
+                chatId,
+                asUserId: sendAs === 'admin' ? null : sendAs,
+                text: text || null,
+                files,
+            });
+            setMessages(prev => [...prev, message]);
+            setDraft('');
+            setDraftFiles([]);
+            setTimeout(scrollToBottom, 50);
+        } catch (err) {
+            showAlert(getApiErrorMessage(err, 'Не удалось отправить сообщение'), 'error');
+        } finally {
+            setIsSending(false);
+        }
+    };
 
     useEffect(() => {
         let isCancelled = false;
@@ -204,6 +242,41 @@ const AdminChatComponent: React.FC<AdminChatProps> = ({ chatId, firstUser, secon
     let previousDateString: string | null = null;
 
     messages.forEach((msg, index) => {
+        const isOwnAdminMessage = msg.isAdminMessage || (msg.fromUserId !== firstUser.id && msg.fromUserId !== secondUser.id);
+        if (isOwnAdminMessage) {
+            const dateKey = msg.sentAt ? new Date(msg.sentAt).toDateString() : '';
+            if (dateKey && dateKey !== previousDateString) {
+                renderedMessages.push(
+                    <div key={`date-${msg.id || index}`} className={styles.dateSeparator}>
+                        <span>{formatDateDelimiter(msg.sentAt!)}</span>
+                    </div>
+                );
+                previousDateString = dateKey;
+            }
+            renderedMessages.push(
+                <div key={msg.id || index} className={styles.adminMessageRow}>
+                    <div className={styles.adminMessage}>
+                        {msg.id && (
+                            <button className={styles.adminDelete} onClick={() => handleDeleteMessage(msg.id!)} title="Удалить сообщение">
+                                <img src={trash} alt="Удалить" />
+                            </button>
+                        )}
+                        <span className={styles.adminMessageLabel}>Администратор · видят оба участника</span>
+                        {msg.files?.map((file, i) => (
+                            <a key={i} href={toApiUrl(file.url)} target="_blank" rel="noopener noreferrer" className={styles.adminFile}>
+                                {formatFileName(file.fileName)}
+                            </a>
+                        ))}
+                        {msg.text && <p className={styles.messageText}>{msg.text}</p>}
+                        <span className={styles.messageTime}>
+                            {new Date(msg.sentAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                    </div>
+                </div>
+            );
+            return;
+        }
+
         const sender = getPartnerInfo(msg.fromUserId);
         const isMe = msg.fromUserId === firstUser.id;
         const nameParts = [sender.firstName, sender.lastName].filter(
@@ -243,6 +316,7 @@ const AdminChatComponent: React.FC<AdminChatProps> = ({ chatId, firstUser, secon
                 <div className={styles.senderHeader}>
                     <span className={styles.senderName}>{senderName}</span>
                     <span className={styles.senderRole}>({getRoleDisplayName(sender.role.id)})</span>
+                    {msg.sentByAdminId && <span className={styles.viaAdmin}>· отправил администратор</span>}
                 </div>
 
                 {/* --- ЛОГИКА РЕНДЕРИНГА ФАЙЛОВ --- */}
@@ -339,6 +413,99 @@ const AdminChatComponent: React.FC<AdminChatProps> = ({ chatId, firstUser, secon
                 {renderedMessages}
 
                 <div ref={messagesEndRef} />
+            </div>
+
+            <div className={styles.composer}>
+                <div className={styles.composerTop}>
+                    <label className={styles.sendAsLabel}>
+                        От имени:
+                        <select
+                            className={styles.sendAsSelect}
+                            value={sendAs}
+                            onChange={e => setSendAs(e.target.value)}
+                            disabled={isSending}
+                        >
+                            <option value="admin">
+                                {adminIsParticipant ? 'Администратора (вас)' : 'Администратора — увидят оба'}
+                            </option>
+                            {[firstUser, secondUser]
+                                .filter(user => user.id !== adminId)
+                                .map(user => (
+                                    <option key={user.id} value={user.id}>
+                                        {userLabel(user)} ({getRoleDisplayName(user.role.id)})
+                                    </option>
+                                ))}
+                        </select>
+                    </label>
+                    {sendAs !== 'admin' && (
+                        <span className={styles.sendAsHint}>
+                            Сообщение уйдёт собеседнику с пометкой «отправлено администратором»
+                        </span>
+                    )}
+                </div>
+
+                {draftFiles.length > 0 && (
+                    <div className={styles.draftFiles}>
+                        {draftFiles.map((file, i) => (
+                            <span key={i} className={styles.draftFile}>
+                                {formatFileName(file.name, 24)}
+                                <button
+                                    type="button"
+                                    onClick={() => setDraftFiles(prev => prev.filter((_, idx) => idx !== i))}
+                                    aria-label="Убрать файл"
+                                >
+                                    ×
+                                </button>
+                            </span>
+                        ))}
+                    </div>
+                )}
+
+                <div className={styles.composerRow}>
+                    <button
+                        type="button"
+                        className={styles.attachButton}
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isSending}
+                        title="Прикрепить файлы"
+                    >
+                        <img src={file_download} alt="" />
+                    </button>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        hidden
+                        onChange={e => {
+                            const selected = Array.from(e.target.files ?? []);
+                            setDraftFiles(prev => [...prev, ...selected].slice(0, 10));
+                            e.target.value = '';
+                        }}
+                    />
+                    <textarea
+                        className={styles.composerInput}
+                        value={draft}
+                        onChange={e => setDraft(e.target.value)}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSend();
+                            }
+                        }}
+                        placeholder="Сообщение…"
+                        rows={1}
+                        maxLength={4000}
+                        disabled={isSending}
+                    />
+                    <button
+                        type="button"
+                        className={styles.sendButton}
+                        onClick={handleSend}
+                        disabled={isSending || (!draft.trim() && draftFiles.length === 0)}
+                    >
+                        {isSending ? '…' : 'Отправить'}
+                    </button>
+                </div>
             </div>
         </div>
     );

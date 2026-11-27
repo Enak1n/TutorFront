@@ -56,3 +56,13 @@ export const markAllNotificationsAsRead = async (): Promise<void> => {
         throw error;
     }
 };
+export interface SupportChatResponse {
+    chatId: string;
+    adminId: string;
+}
+
+/** Чат с поддержкой (администратором). Создаётся при первом обращении. */
+export const getSupportChat = async (): Promise<SupportChatResponse> => {
+    const response = await apiClient.get<SupportChatResponse>('/chat/support');
+    return response.data;
+};

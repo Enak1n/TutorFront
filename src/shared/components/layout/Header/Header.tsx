@@ -50,12 +50,19 @@ const getMainNav = (role: UserRole | null, unread: number): NavItem[] => {
 			to: isAdmin ? '/tutor-student-link' : '/students',
 		},
 		{ label: 'Статистика', to: isAdmin ? '/all-statistic' : '/statistic' },
+		...(isAdmin ? [] : [{ label: 'Домашние задания', to: '/homework' }]),
 		{ label: 'Сообщения', to: isAdmin ? '/all-message' : '/messages', badge: unread },
 	]
 }
 
 const getProfileNav = (role: UserRole | null): NavItem[] => [
 	{ label: 'Мой профиль', to: '/profile' },
+	...(role === 'tutor'
+		? [
+				{ label: 'Подписка', to: '/subscription' },
+				{ label: 'Уведомления ученикам', to: '/notification-settings' },
+			]
+		: []),
 	...(role === 'admin'
 		? [
 				{ label: 'Пользователи', to: '/admin/users' },

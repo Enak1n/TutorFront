@@ -94,6 +94,12 @@ export const SSEProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 refreshUnreadCountRef.current().catch(() => undefined);
                 break;
 
+            // Уведомления о занятиях и домашних заданиях (текст уже готов на сервере).
+            case 'notification':
+                showMessageToast(event.data);
+                window.dispatchEvent(new CustomEvent('app:notification', { detail: event.data }));
+                break;
+
             default:
                 try {
                     const parsed = JSON.parse(event.data);

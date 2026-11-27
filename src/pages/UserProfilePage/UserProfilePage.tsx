@@ -6,6 +6,7 @@ import { getUserProfile, updateUserProfile, UserUpdateData, deleteUser } from '@
 import { UserDetailedInfo } from '@api/auth';
 import { useAlert } from '@components/ui/alert/AlertContext';
 import { EditUserModal } from './EditUserModal';
+import { AdminSubscriptionCard, MyContactsCard } from './ProfileExtras';
 // @ts-ignore
 import styles from './UserProfilePage.module.scss';
 // @ts-ignore
@@ -181,6 +182,10 @@ const UserProfilePage: React.FC = () => {
                     )}
                 </div>
             </div>
+
+            {isMyProfile && !isAdmin && <MyContactsCard isTutor={role.id === 'tutor'} />}
+
+            {isAdmin && !isMyProfile && role.id === 'tutor' && <AdminSubscriptionCard userId={id} />}
 
             {/* 💡 Модальное окно Редактирования */}
             {isAdmin && profileData && (
